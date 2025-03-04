@@ -1,6 +1,6 @@
 package com.tpt.capstone_ecommerce.ecommerce.entity;
 
-import com.tpt.capstone_ecommerce.enums.LOCATION_TYPE;
+import com.tpt.capstone_ecommerce.ecommerce.enums.LOCATION_TYPE;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

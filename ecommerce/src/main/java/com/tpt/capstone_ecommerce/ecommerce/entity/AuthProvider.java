@@ -1,6 +1,6 @@
 package com.tpt.capstone_ecommerce.ecommerce.entity;
 
-import com.tpt.capstone_ecommerce.enums.AUTH_PROVIDER;
+import com.tpt.capstone_ecommerce.ecommerce.enums.AUTH_PROVIDER;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

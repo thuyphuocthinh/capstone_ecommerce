@@ -1,7 +1,6 @@
 package com.tpt.capstone_ecommerce.ecommerce.entity;
 
-import com.tpt.capstone_ecommerce.enums.SHOP_STATUS;
-import com.tpt.capstone_ecommerce.enums.USER_STATUS;
+import com.tpt.capstone_ecommerce.ecommerce.enums.SHOP_STATUS;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

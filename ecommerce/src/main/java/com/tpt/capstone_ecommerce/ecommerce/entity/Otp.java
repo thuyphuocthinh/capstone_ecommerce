@@ -1,7 +1,7 @@
 package com.tpt.capstone_ecommerce.ecommerce.entity;
 
-import com.tpt.capstone_ecommerce.enums.OTP_STATUS;
-import com.tpt.capstone_ecommerce.enums.SHOP_STATUS;
+import com.tpt.capstone_ecommerce.ecommerce.enums.OTP_STATUS;
+import com.tpt.capstone_ecommerce.ecommerce.enums.SHOP_STATUS;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

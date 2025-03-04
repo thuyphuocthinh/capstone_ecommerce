@@ -1,6 +1,6 @@
 package com.tpt.capstone_ecommerce.ecommerce.entity;
 
-import com.tpt.capstone_ecommerce.enums.USER_ROLE;
+import com.tpt.capstone_ecommerce.ecommerce.enums.USER_ROLE;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
