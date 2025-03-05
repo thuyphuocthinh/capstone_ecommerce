@@ -10,7 +10,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface UserRepository extends JpaRepository<User, UUID> {
+public interface UserRepository extends JpaRepository<User, String> {
     Optional<User> findByEmail(@Email(message = "Email is invalid") @Size(max = 255, message = "Email is too long") String email);
 
     boolean existsByEmail(@Email(message = "Email is invalid") @Size(max = 255, message = "Email is too long") String email);

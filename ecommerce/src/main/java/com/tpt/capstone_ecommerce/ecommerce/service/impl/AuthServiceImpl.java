@@ -1,6 +1,8 @@
 package com.tpt.capstone_ecommerce.ecommerce.service.impl;
 
 import com.tpt.capstone_ecommerce.ecommerce.auth.jwt.JwtProvider;
+import com.tpt.capstone_ecommerce.ecommerce.constant.RoleErrorConstant;
+import com.tpt.capstone_ecommerce.ecommerce.constant.UserErrorConstant;
 import com.tpt.capstone_ecommerce.ecommerce.dto.request.LoginRequest;
 import com.tpt.capstone_ecommerce.ecommerce.dto.request.LogoutRequest;
 import com.tpt.capstone_ecommerce.ecommerce.dto.request.RefreshTokenRequest;
@@ -11,6 +13,8 @@ import com.tpt.capstone_ecommerce.ecommerce.dto.response.RefreshTokenResponse;
 import com.tpt.capstone_ecommerce.ecommerce.dto.response.RegisterResponse;
 import com.tpt.capstone_ecommerce.ecommerce.entity.*;
 import com.tpt.capstone_ecommerce.ecommerce.enums.USER_ROLE;
+import com.tpt.capstone_ecommerce.ecommerce.enums.USER_STATUS;
+import com.tpt.capstone_ecommerce.ecommerce.exception.UserStatusException;
 import com.tpt.capstone_ecommerce.ecommerce.repository.CartRepository;
 import com.tpt.capstone_ecommerce.ecommerce.repository.RoleRepository;
 import com.tpt.capstone_ecommerce.ecommerce.repository.TokenRepository;
@@ -71,6 +75,14 @@ public class AuthServiceImpl implements AuthService {
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         User user = userDetails.getUser();
 
+        if(user.getStatus() == USER_STATUS.PENDING) {
+            throw new UserStatusException(UserErrorConstant.USER_PENDING_STATUS);
+        }
+
+        if(user.getStatus() == USER_STATUS.INACTIVE) {
+            throw new UserStatusException(UserErrorConstant.USER_INACTIVE_STATUS);
+        }
+
         // 3. Create refresh token, access token
         String accessToken = this.jwtProvider.generateAccessToken(authentication);
         String refreshToken = this.jwtProvider.generateRefreshToken(authentication);
@@ -97,11 +109,11 @@ public class AuthServiceImpl implements AuthService {
         UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
 
         if(userDetails == null) {
-            throw new BadCredentialsException("Invalid username or password");
+            throw new BadCredentialsException(UserErrorConstant.INVALID_CREDENTIALS);
         }
 
         if(!passwordEncoder.matches(password, userDetails.getPassword())) {
-            throw new BadCredentialsException("Invalid username or password");
+            throw new BadCredentialsException(UserErrorConstant.INVALID_CREDENTIALS);
         }
 
         return new UsernamePasswordAuthenticationToken(
@@ -116,7 +128,7 @@ public class AuthServiceImpl implements AuthService {
         // Check email exists ?
         Optional<User> findUserByEmail = this.userRepository.findByEmail(email);
         if(findUserByEmail.isPresent()) {
-            throw new BadCredentialsException("Email already exists");
+            throw new BadCredentialsException(UserErrorConstant.EMAIL_ALREADY_EXISTS);
         }
 
         // Encode password
@@ -129,7 +141,7 @@ public class AuthServiceImpl implements AuthService {
         Role role = roleRepository.findByRole(USER_ROLE.CUSTOMER);
         log.info("Register::role: {}", role);
         if (role == null) {
-            throw new RuntimeException("Role CUSTOMER không tồn tại trong database");
+            throw new RuntimeException(RoleErrorConstant.ROLE_CUSTOMER_NOT_EXIST);
         }
         registeredUser.setRoles(List.of(role));
         this.userRepository.save(registeredUser);
