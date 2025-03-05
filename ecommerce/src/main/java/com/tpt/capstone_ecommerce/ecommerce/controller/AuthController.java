@@ -1,9 +1,6 @@
 package com.tpt.capstone_ecommerce.ecommerce.controller;
 
-import com.tpt.capstone_ecommerce.ecommerce.dto.request.LoginRequest;
-import com.tpt.capstone_ecommerce.ecommerce.dto.request.LogoutRequest;
-import com.tpt.capstone_ecommerce.ecommerce.dto.request.RefreshTokenRequest;
-import com.tpt.capstone_ecommerce.ecommerce.dto.request.RegisterRequest;
+import com.tpt.capstone_ecommerce.ecommerce.dto.request.*;
 import com.tpt.capstone_ecommerce.ecommerce.dto.response.APISuccessResponse;
 import com.tpt.capstone_ecommerce.ecommerce.service.AuthService;
 import jakarta.mail.MessagingException;
@@ -99,4 +96,43 @@ public class AuthController {
 
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+
+    @PostMapping("/forgot-password/send-otp")
+    public ResponseEntity<?> forgotPasswordSendOtpHandler(
+            @RequestBody ForgotPasswordRequest forgotPasswordRequest
+            ) throws MessagingException, IOException {
+        APISuccessResponse<Object> response = APISuccessResponse.builder()
+                .data(this.authService.forgotPasswordSendOtpService(forgotPasswordRequest))
+                .message("Success")
+                .build();
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    // verify-otp
+    @PostMapping("/forgot-password/verify-otp")
+    public ResponseEntity<?> forgotPasswordVerifyOtpHandler(
+            @RequestBody VerifyOtpRequest verifyOtpRequest
+    )  {
+        APISuccessResponse<Object> response = APISuccessResponse.builder()
+                .data(this.authService.verifyOtpForResetPasswordService(verifyOtpRequest.getOtp()))
+                .message("Success")
+                .build();
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    // reset-password
+    @PostMapping("/forgot-password/reset")
+    public ResponseEntity<?> forgotPasswordResetHandler(
+            @RequestBody ResetPasswordRequest resetPasswordRequest
+    )  {
+        APISuccessResponse<Object> response = APISuccessResponse.builder()
+                .data(this.authService.resetPasswordService(resetPasswordRequest))
+                .message("Success")
+                .build();
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
 }

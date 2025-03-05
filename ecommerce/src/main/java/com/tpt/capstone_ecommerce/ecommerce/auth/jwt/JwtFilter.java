@@ -46,7 +46,7 @@ public class JwtFilter extends OncePerRequestFilter {
                 String email = String.valueOf(claims.get("email"));
                 List<String> roles = claims.get("authorities", List.class); // Lấy thẳng List<String>
                 List<GrantedAuthority> authorityList = roles.stream()
-                        .map(SimpleGrantedAuthority::new) // Chuyển thành GrantedAuthority
+                        .map(role -> new SimpleGrantedAuthority("ROLE_" + role)) // Thêm "ROLE_" vào trước role
                         .collect(Collectors.toList());
                 // CREATE AN AUTHENTICATION
                 Authentication auth = new UsernamePasswordAuthenticationToken(email, null, authorityList);

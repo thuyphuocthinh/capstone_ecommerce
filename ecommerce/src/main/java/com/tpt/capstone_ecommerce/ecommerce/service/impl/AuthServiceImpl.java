@@ -3,14 +3,8 @@ package com.tpt.capstone_ecommerce.ecommerce.service.impl;
 import com.tpt.capstone_ecommerce.ecommerce.auth.jwt.JwtProvider;
 import com.tpt.capstone_ecommerce.ecommerce.constant.RoleErrorConstant;
 import com.tpt.capstone_ecommerce.ecommerce.constant.UserErrorConstant;
-import com.tpt.capstone_ecommerce.ecommerce.dto.request.LoginRequest;
-import com.tpt.capstone_ecommerce.ecommerce.dto.request.LogoutRequest;
-import com.tpt.capstone_ecommerce.ecommerce.dto.request.RefreshTokenRequest;
-import com.tpt.capstone_ecommerce.ecommerce.dto.request.RegisterRequest;
-import com.tpt.capstone_ecommerce.ecommerce.dto.response.LoginResponse;
-import com.tpt.capstone_ecommerce.ecommerce.dto.response.LogoutResponse;
-import com.tpt.capstone_ecommerce.ecommerce.dto.response.TokenResponse;
-import com.tpt.capstone_ecommerce.ecommerce.dto.response.RegisterResponse;
+import com.tpt.capstone_ecommerce.ecommerce.dto.request.*;
+import com.tpt.capstone_ecommerce.ecommerce.dto.response.*;
 import com.tpt.capstone_ecommerce.ecommerce.entity.*;
 import com.tpt.capstone_ecommerce.ecommerce.enums.USER_ROLE;
 import com.tpt.capstone_ecommerce.ecommerce.enums.USER_STATUS;
@@ -160,7 +154,7 @@ public class AuthServiceImpl implements AuthService {
         this.userRepository.save(registeredUser);
 
         String otp = this.otpService.generateOtp(email);
-        String template = Template.getOtpHtmlTemplate(otp);
+        String template = Template.getOtpHtmlTemplateAuth(otp);
         this.emailService.sendEmailWithHtml(email, "VERIFY EMAIL TPT_SHOP", template);
 
         return RegisterResponse.builder()
@@ -244,6 +238,50 @@ public class AuthServiceImpl implements AuthService {
                 .build();
     }
 
+    @Override
+    public EmailResponse forgotPasswordSendOtpService(ForgotPasswordRequest forgotPasswordRequest) throws IOException, MessagingException {
+        String email = forgotPasswordRequest.getEmail();
+
+        User user = this.userRepository.findByEmail(email).orElseThrow(() -> new NotFoundException("User not found"));
+
+        if(user.getStatus() == USER_STATUS.PENDING) {
+            throw new UserStatusException(UserErrorConstant.USER_PENDING_STATUS);
+        }
+
+        if(user.getStatus() == USER_STATUS.INACTIVE) {
+            throw new UserStatusException(UserErrorConstant.USER_INACTIVE_STATUS);
+        }
+
+        String otp = this.otpService.generateOtp(email);
+        String template = Template.getOtpHtmlTemplateForgot(otp);
+        this.emailService.sendEmailWithHtml(email, "VERIFY EMAIL TPT_SHOP", template);
+        return EmailResponse.builder()
+                .message("OTP was successfully sent to you email. Please verify.")
+                .build();
+    }
+
+    @Override
+    public String verifyOtpForResetPasswordService(String otp) {
+        this.otpService.validateOtp(otp);
+        return "Success";
+    }
+
+    @Override
+    public String resetPasswordService(ResetPasswordRequest resetPasswordRequest) {
+        String password = resetPasswordRequest.getPassword();
+        String confirmPassword = resetPasswordRequest.getConfirmPassword();
+        String email = resetPasswordRequest.getEmail();
+
+        if(!password.equals(confirmPassword)) {
+            throw new BadCredentialsException("Passwords do not match");
+        }
+
+        User user = this.userRepository.findByEmail(email).orElseThrow(() -> new NotFoundException("User not found"));
+        user.setPassword(this.passwordEncoder.encode(password));
+        this.userRepository.save(user);
+
+        return "Success";
+    }
 
     public String verifyEmailService(String otp) {
         this.otpService.validateOtp(otp);

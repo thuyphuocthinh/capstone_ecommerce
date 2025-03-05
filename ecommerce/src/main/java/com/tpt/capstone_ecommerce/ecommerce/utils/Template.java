@@ -6,9 +6,18 @@ import java.io.IOException;
 import java.nio.file.Files;
 
 public class Template {
-    public static String getOtpHtmlTemplate(String otp) throws IOException {
+    public static String getOtpHtmlTemplateAuth(String otp) throws IOException {
         // Read the HTML template file
-        ClassPathResource resource = new ClassPathResource("templates/otp_template.html");
+        ClassPathResource resource = new ClassPathResource("templates/otp_template_auth.html");
+        String template = Files.readString(resource.getFile().toPath());
+
+        // Replace {{OTP}} with the actual OTP
+        return template.replace("{{OTP}}", otp);
+    }
+
+    public static String getOtpHtmlTemplateForgot(String otp) throws IOException {
+        // Read the HTML template file
+        ClassPathResource resource = new ClassPathResource("templates/otp_template_forgot.html");
         String template = Files.readString(resource.getFile().toPath());
 
         // Replace {{OTP}} with the actual OTP
