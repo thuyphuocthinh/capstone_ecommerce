@@ -9,17 +9,19 @@ import com.tpt.capstone_ecommerce.ecommerce.dto.request.RefreshTokenRequest;
 import com.tpt.capstone_ecommerce.ecommerce.dto.request.RegisterRequest;
 import com.tpt.capstone_ecommerce.ecommerce.dto.response.LoginResponse;
 import com.tpt.capstone_ecommerce.ecommerce.dto.response.LogoutResponse;
-import com.tpt.capstone_ecommerce.ecommerce.dto.response.RefreshTokenResponse;
+import com.tpt.capstone_ecommerce.ecommerce.dto.response.TokenResponse;
 import com.tpt.capstone_ecommerce.ecommerce.dto.response.RegisterResponse;
 import com.tpt.capstone_ecommerce.ecommerce.entity.*;
 import com.tpt.capstone_ecommerce.ecommerce.enums.USER_ROLE;
 import com.tpt.capstone_ecommerce.ecommerce.enums.USER_STATUS;
+import com.tpt.capstone_ecommerce.ecommerce.exception.NotFoundException;
 import com.tpt.capstone_ecommerce.ecommerce.exception.UserStatusException;
-import com.tpt.capstone_ecommerce.ecommerce.repository.CartRepository;
-import com.tpt.capstone_ecommerce.ecommerce.repository.RoleRepository;
-import com.tpt.capstone_ecommerce.ecommerce.repository.TokenRepository;
-import com.tpt.capstone_ecommerce.ecommerce.repository.UserRepository;
+import com.tpt.capstone_ecommerce.ecommerce.repository.*;
 import com.tpt.capstone_ecommerce.ecommerce.service.AuthService;
+import com.tpt.capstone_ecommerce.ecommerce.service.EmailService;
+import com.tpt.capstone_ecommerce.ecommerce.service.OtpService;
+import com.tpt.capstone_ecommerce.ecommerce.utils.Template;
+import jakarta.mail.MessagingException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -30,6 +32,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -47,21 +50,30 @@ public class AuthServiceImpl implements AuthService {
 
     private final CartRepository cartRepository;
 
+    private final EmailService emailService;
+
     private final TokenRepository tokenRepository;
 
     private final RoleRepository roleRepository;
 
+    private final OtpService otpService;
+
+    private final OtpRepository otpRepository;
+
     @Value("${jwt.refreshToken.expiration}")
     private int jwtRefreshTokenExpirationMs;
 
-    public AuthServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtProvider jwtProvider, CustomUserDetailsService customUserDetailsService, CartRepository cartRepository, TokenRepository tokenRepository, RoleRepository roleRepository) {
+    public AuthServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtProvider jwtProvider, CustomUserDetailsService customUserDetailsService, CartRepository cartRepository, EmailService emailService, TokenRepository tokenRepository, RoleRepository roleRepository, OtpService otpService, OtpRepository otpRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtProvider = jwtProvider;
         this.customUserDetailsService = customUserDetailsService;
         this.cartRepository = cartRepository;
+        this.emailService = emailService;
         this.tokenRepository = tokenRepository;
         this.roleRepository = roleRepository;
+        this.otpService = otpService;
+        this.otpRepository = otpRepository;
     }
 
     @Override
@@ -122,9 +134,10 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public RegisterResponse registerService(RegisterRequest registerRequest, String ipAddress, String userAgent) {
+    public RegisterResponse registerService(RegisterRequest registerRequest) throws MessagingException, IOException {
         String email = registerRequest.getEmail();
         String password = registerRequest.getPassword();
+
         // Check email exists ?
         Optional<User> findUserByEmail = this.userRepository.findByEmail(email);
         if(findUserByEmail.isPresent()) {
@@ -146,36 +159,17 @@ public class AuthServiceImpl implements AuthService {
         registeredUser.setRoles(List.of(role));
         this.userRepository.save(registeredUser);
 
-        Authentication authentication = this.authenticate(email, password);
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        String accessToken = this.jwtProvider.generateAccessToken(authentication);
-        String refreshToken = this.jwtProvider.generateRefreshToken(authentication);
+        String otp = this.otpService.generateOtp(email);
+        String template = Template.getOtpHtmlTemplate(otp);
+        this.emailService.sendEmailWithHtml(email, "VERIFY EMAIL TPT_SHOP", template);
 
-        Token token = Token.builder()
-                .user(registeredUser)
-                .refreshToken(refreshToken)
-                .ipAddress(ipAddress)
-                .userAgent(userAgent)
-                .expiredAt(LocalDateTime.now().plus(jwtRefreshTokenExpirationMs, ChronoUnit.MILLIS))
+        return RegisterResponse.builder()
+                .message("OTP was successfully sent to you email. Please verify.")
                 .build();
-        this.tokenRepository.save(token);
-        log.info("Register::AccessToken: {}", accessToken);
-        log.info("Register::RefreshToken: {}", refreshToken);
-
-        // Create cart
-        Cart cart = new Cart();
-        cart.setUser(registeredUser);
-        this.cartRepository.save(cart);
-
-        // Save user
-        return RegisterResponse.builder().
-                accessToken(accessToken).
-                refreshToken(refreshToken).
-                build();
     }
 
     @Override
-    public RefreshTokenResponse refreshTokenService(RefreshTokenRequest refreshTokenRequest) {
+    public TokenResponse refreshTokenService(RefreshTokenRequest refreshTokenRequest) {
         String refreshToken = refreshTokenRequest.getRefreshToken();
         Token verify = this.jwtProvider.verifyRefreshToken(refreshToken);
 
@@ -190,7 +184,7 @@ public class AuthServiceImpl implements AuthService {
         log.info("Refresh::AccessToken: {}", newAccessToken);
         log.info("Refresh::RefreshToken: {}", newRefreshToken);
 
-        return RefreshTokenResponse.builder()
+        return TokenResponse.builder()
                 .accessToken(newAccessToken)
                 .refreshToken(newRefreshToken)
                 .build();
@@ -204,5 +198,61 @@ public class AuthServiceImpl implements AuthService {
         return LogoutResponse.builder()
                 .message(this.jwtProvider.revokeRefreshToken(refreshToken))
                 .build();
+    }
+
+    @Override
+    public TokenResponse verifyEmailServiceForAuth(String otp, String ipAddress, String userAgent) {
+        // Lấy email từ OTP
+        String email = this.verifyEmailService(otp);
+
+        // Tìm User bằng email
+        Optional<User> user = this.userRepository.findByEmail(email);
+        if (user.isEmpty()) {
+            throw new NotFoundException("User not found");
+        }
+
+        User userFromDb = user.get();
+        userFromDb.setStatus(USER_STATUS.ACTIVE);
+        this.userRepository.save(userFromDb);
+
+        // Tạo đối tượng `Authentication`
+        UserDetails userDetails = customUserDetailsService.loadUserByUsername(email);
+        Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        // Tạo AccessToken & RefreshToken từ `authentication`
+        String accessToken = jwtProvider.generateAccessToken(authentication);
+        String refreshToken = jwtProvider.generateRefreshToken(authentication);
+
+        Token token = Token.builder()
+                .user(user.get())
+                .refreshToken(refreshToken)
+                .ipAddress(ipAddress)
+                .userAgent(userAgent)
+                .expiredAt(LocalDateTime.now().plus(jwtRefreshTokenExpirationMs, ChronoUnit.MILLIS))
+                .build();
+
+        this.tokenRepository.save(token);
+
+        Cart cart = new Cart();
+        cart.setUser(user.get());
+        this.cartRepository.save(cart);
+
+        return TokenResponse.builder()
+                .refreshToken(refreshToken)
+                .accessToken(accessToken)
+                .build();
+    }
+
+
+    public String verifyEmailService(String otp) {
+        this.otpService.validateOtp(otp);
+        Otp findOtp = this.otpRepository.findByOtp(otp);
+
+        if(findOtp == null) {
+            throw new NotFoundException("Otp not found");
+        }
+
+        return findOtp.getUserEmail();
     }
 }

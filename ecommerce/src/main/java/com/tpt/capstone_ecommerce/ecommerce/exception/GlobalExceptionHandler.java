@@ -9,7 +9,6 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.nio.file.AccessDeniedException;
 import java.security.SignatureException;
@@ -64,11 +63,30 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(UserStatusException.class)
-    public ResponseEntity<?> handleResponseStatusException(UserStatusException ex) {
+    public ResponseEntity<?> handleUserStatusException(UserStatusException ex) {
         APIErrorResponse response = APIErrorResponse.builder().message(ex.getMessage()).build();
         return new ResponseEntity<>(
                 response,
                 HttpStatus.FORBIDDEN
         );
     }
+
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<?> handleNotFoundException(NotFoundException ex) {
+        APIErrorResponse response = APIErrorResponse.builder().message(ex.getMessage()).build();
+        return new ResponseEntity<>(
+                response,
+                HttpStatus.BAD_REQUEST
+        );
+    }
+
+    @ExceptionHandler(TimeExpiredException.class)
+    public ResponseEntity<?> handleTimeExpiredException(TimeExpiredException ex) {
+        APIErrorResponse response = APIErrorResponse.builder().message(ex.getMessage()).build();
+        return new ResponseEntity<>(
+                response,
+                HttpStatus.BAD_REQUEST
+        );
+    }
 }
+

@@ -6,6 +6,7 @@ import com.tpt.capstone_ecommerce.ecommerce.dto.request.RefreshTokenRequest;
 import com.tpt.capstone_ecommerce.ecommerce.dto.request.RegisterRequest;
 import com.tpt.capstone_ecommerce.ecommerce.dto.response.APISuccessResponse;
 import com.tpt.capstone_ecommerce.ecommerce.service.AuthService;
+import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.Optional;
 
 @RestController
@@ -49,17 +51,12 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<?> registerHandler(
-            @RequestBody @Valid RegisterRequest registerRequest,
-            @RequestHeader(value = "User-Agent", required = false) String userAgent,
-            @RequestHeader(value = "X-Forwarded-For", required = false) Optional<String> forwardedForOpt,
-            HttpServletRequest request
-    ) {
+            @RequestBody @Valid RegisterRequest registerRequest
+    ) throws MessagingException, IOException {
         log.info("Register request:::: {}", registerRequest);
 
-        String ip = forwardedForOpt.filter(f -> !f.isEmpty()).orElse(request.getRemoteAddr());
-
         APISuccessResponse<Object> response = APISuccessResponse.builder()
-                .data(this.authService.registerService(registerRequest, ip, userAgent))
+                .data(this.authService.registerService(registerRequest))
                 .message("Success")
                 .build();
 
@@ -84,6 +81,22 @@ public class AuthController {
                 .data(this.authService.logoutService(logoutRequest))
                 .message("Success")
                 .build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @GetMapping("/verify-email")
+    public ResponseEntity<?> verifyEmailHandler(
+            @RequestParam(value = "otp", required = true) String otp,
+            @RequestHeader(value = "User-Agent", required = false) String userAgent,
+            @RequestHeader(value = "X-Forwarded-For", required = false) Optional<String> forwardedForOpt,
+            HttpServletRequest request
+    ) {
+        String ip = forwardedForOpt.filter(f -> !f.isEmpty()).orElse(request.getRemoteAddr());
+        APISuccessResponse<Object> response = APISuccessResponse.builder()
+                .data(this.authService.verifyEmailServiceForAuth(otp, ip, userAgent))
+                .message("Success")
+                .build();
+
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }

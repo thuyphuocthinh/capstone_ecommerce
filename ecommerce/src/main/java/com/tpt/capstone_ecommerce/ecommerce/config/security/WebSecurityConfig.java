@@ -51,7 +51,7 @@ public class WebSecurityConfig {
                 )
                 .addFilterBefore(jwtFilter(), UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/auth/register", "/api/v1/auth/login").permitAll()
+                        .requestMatchers("/api/v1/auth/register", "/api/v1/auth/login", "/api/v1/auth/verify-email").permitAll()
                         .requestMatchers("/error").permitAll() // 🟢 Cho phép các API này không cần auth
                         .anyRequest().authenticated() // 🔒 Các API khác cần authentication
                 );
