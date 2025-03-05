@@ -12,6 +12,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Data
 @NoArgsConstructor
@@ -22,7 +23,7 @@ import java.time.LocalDateTime;
 public class Location {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(nullable = false, updatable = false, unique = true)
+    @Column(columnDefinition = "VARCHAR(36)", updatable = false, nullable = false)
     private String id;
 
     @Column(nullable = false, name = "name")
