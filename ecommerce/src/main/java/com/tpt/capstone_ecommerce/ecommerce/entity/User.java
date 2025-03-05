@@ -24,17 +24,13 @@ import java.util.UUID;
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(length = 36, updatable = false, nullable = false)
-    private UUID id;
+    @Column(columnDefinition = "VARCHAR(36)", updatable = false, nullable = false)
+    private String id;
 
-    @Column(nullable = false, name = "first_name")
-    @NotBlank(message = "First name cannot be blank")
-    @Size(min = 1, max = 255, message = "First name length is invalid")
+    @Column(nullable = true, name = "first_name")
     private String firstName;
 
-    @Column(nullable = false, name = "last_name")
-    @NotBlank(message = "Last name cannot be blank")
-    @Size(min = 1, max = 255, message = "Last name length is invalid")
+    @Column(nullable = true, name = "last_name")
     private String lastName;
 
     @Column(nullable = false, unique = true, name = "email")
@@ -83,6 +79,10 @@ public class User {
     public void prePersist() {
         if (status == null) {
             status = USER_STATUS.PENDING;
+        }
+
+        if (this.id == null) {
+            this.id = UUID.randomUUID().toString();
         }
     }
 }

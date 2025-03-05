@@ -20,8 +20,8 @@ import java.util.UUID;
 public class Token {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(length = 36, updatable = false, nullable = false)
-    private UUID id;
+    @Column(columnDefinition = "VARCHAR(36)", updatable = false, nullable = false)
+    private String id;
 
     @Column(nullable = false, unique = true, name = "refresh_token")
     @Lob
@@ -39,7 +39,7 @@ public class Token {
     @Column(nullable = false, name = "expired_at")
     private LocalDateTime expiredAt;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
