@@ -54,10 +54,12 @@ public class AuthServiceImpl implements AuthService {
 
     private final OtpRepository otpRepository;
 
+    private final AuthProviderRepository authProviderRepository;
+
     @Value("${jwt.refreshToken.expiration}")
     private int jwtRefreshTokenExpirationMs;
 
-    public AuthServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtProvider jwtProvider, CustomUserDetailsService customUserDetailsService, CartRepository cartRepository, EmailService emailService, TokenRepository tokenRepository, RoleRepository roleRepository, OtpService otpService, OtpRepository otpRepository) {
+    public AuthServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtProvider jwtProvider, CustomUserDetailsService customUserDetailsService, CartRepository cartRepository, EmailService emailService, TokenRepository tokenRepository, RoleRepository roleRepository, OtpService otpService, OtpRepository otpRepository, AuthProviderRepository authProviderRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtProvider = jwtProvider;
@@ -68,6 +70,7 @@ public class AuthServiceImpl implements AuthService {
         this.roleRepository = roleRepository;
         this.otpService = otpService;
         this.otpRepository = otpRepository;
+        this.authProviderRepository = authProviderRepository;
     }
 
     @Override
@@ -281,6 +284,69 @@ public class AuthServiceImpl implements AuthService {
         this.userRepository.save(user);
 
         return "Success";
+    }
+
+    private void saveAuthProvider(GoogleUserDTO googleUserDTO, User user) {
+        AuthProvider authProvider = AuthProvider.builder()
+                .providerId(googleUserDTO.getSub())
+                .email(googleUserDTO.getEmail())
+                .user(user)
+                .build();
+
+        this.authProviderRepository.save(authProvider);
+    }
+
+    @Override
+    public LoginResponse handleLoginGoogleService(GoogleUserDTO googleUserDTO, String ipAddress, String userAgent) {
+        String email = googleUserDTO.getEmail();
+
+        User createdOrExist = this.userRepository.findByEmail(email).orElseGet(() -> {
+            Role role = roleRepository.findByRole(USER_ROLE.CUSTOMER);
+            User newUser = User.builder()
+                    .email(email)
+                    .firstName(googleUserDTO.getGivenName())
+                    .lastName(googleUserDTO.getFamilyName())
+                    .password(passwordEncoder.encode(UUID.randomUUID().toString()))
+                    .status(USER_STATUS.ACTIVE)
+                    .roles(List.of(role))
+                    .build();
+            User savedUser = this.userRepository.save(newUser);
+
+            Cart cart = new Cart();
+            cart.setUser(savedUser);
+            this.cartRepository.save(cart);
+
+            this.saveAuthProvider(googleUserDTO, savedUser);
+
+            return savedUser;
+        });
+
+        AuthProvider findAuthProvider = this.authProviderRepository.findByEmail(email);
+        if(findAuthProvider == null) {
+            this.saveAuthProvider(googleUserDTO, createdOrExist);
+        }
+
+        UserDetails userDetails = customUserDetailsService.loadUserByUsername(email);
+        Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        // Tạo AccessToken & RefreshToken từ `authentication`
+        String accessToken = jwtProvider.generateAccessToken(authentication);
+        String refreshToken = jwtProvider.generateRefreshToken(authentication);
+
+        Token token = Token.builder()
+                .user(createdOrExist)
+                .refreshToken(refreshToken)
+                .ipAddress(ipAddress)
+                .userAgent(userAgent)
+                .expiredAt(LocalDateTime.now().plus(jwtRefreshTokenExpirationMs, ChronoUnit.MILLIS))
+                .build();
+        this.tokenRepository.save(token);
+
+        return LoginResponse.builder().
+                accessToken(accessToken).
+                refreshToken(refreshToken).
+                build();
     }
 
     public String verifyEmailService(String otp) {

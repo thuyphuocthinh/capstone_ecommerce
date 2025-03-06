@@ -59,10 +59,16 @@ public class WebSecurityConfig {
                                 "/api/v1/auth/verify-email",
                                 "/api/v1/auth/forgot-password/send-otp",
                                 "/api/v1/auth/forgot-password/verify-otp",
-                                "/api/v1/auth/forgot-password/reset"
+                                "/api/v1/auth/forgot-password/reset",
+                                "/api/v1/auth/google/verify-token"
                         ).permitAll()
                         .requestMatchers("/error").permitAll() // 🟢 Cho phép các API này không cần auth
                         .anyRequest().authenticated() // 🔒 Các API khác cần authentication
+                )
+                .oauth2Login(oauth2 -> oauth2 // Thêm OAuth2
+                        .redirectionEndpoint(redir ->
+                                redir.baseUri("/api/v1/auth/google/callback") // Nơi Google redirect về
+                        )
                 );
         return http.build();
     }
@@ -73,7 +79,7 @@ public class WebSecurityConfig {
             public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
                 CorsConfiguration config = new CorsConfiguration();
                 config.setAllowCredentials(true);
-                config.addAllowedOrigin("*");
+                config.setAllowedOriginPatterns(List.of("http://localhost:5173"));
                 config.addAllowedHeader("*");
                 config.addAllowedMethod("*");
                 config.addExposedHeader("Authorization");

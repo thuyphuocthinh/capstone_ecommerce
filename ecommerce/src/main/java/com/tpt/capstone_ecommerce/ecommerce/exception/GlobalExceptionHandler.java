@@ -4,6 +4,7 @@ import com.tpt.capstone_ecommerce.ecommerce.dto.response.APIErrorResponse;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import jakarta.mail.MessagingException;
+import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -21,16 +22,25 @@ import java.util.Map;
 public class GlobalExceptionHandler {
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<APIErrorResponse> handleBadCredentials(BadCredentialsException ex) {
-        APIErrorResponse response = APIErrorResponse.builder().message(ex.getMessage()).build();
+        APIErrorResponse response = APIErrorResponse.builder().message(ex.getMessage()).status("Error").build();
         return new ResponseEntity<>(
                 response,
                 HttpStatus.UNAUTHORIZED
         );
     }
 
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<APIErrorResponse> handleBadCredentials(BadRequestException ex) {
+        APIErrorResponse response = APIErrorResponse.builder().message(ex.getMessage()).status("Error").build();
+        return new ResponseEntity<>(
+                response,
+                HttpStatus.BAD_REQUEST
+        );
+    }
+
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<?> handleAccessDenied(AccessDeniedException ex) {
-        APIErrorResponse response = APIErrorResponse.builder().message(ex.getMessage()).build();
+        APIErrorResponse response = APIErrorResponse.builder().message(ex.getMessage()).status("Error").build();
         return new ResponseEntity<>(
                 response,
                 HttpStatus.FORBIDDEN
@@ -39,7 +49,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({SignatureException.class, MalformedJwtException.class})
     public ResponseEntity<?> handleInvalidJwtToken(Exception ex) {
-        APIErrorResponse response = APIErrorResponse.builder().message(ex.getMessage()).build();
+        APIErrorResponse response = APIErrorResponse.builder().message(ex.getMessage()).status("Error").build();
         return new ResponseEntity<>(
                 response,
                 HttpStatus.UNAUTHORIZED
@@ -48,7 +58,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ExpiredJwtException.class)
     public ResponseEntity<?> handleExpiredJwtToken(ExpiredJwtException ex) {
-        APIErrorResponse response = APIErrorResponse.builder().message(ex.getMessage()).build();
+        APIErrorResponse response = APIErrorResponse.builder().message(ex.getMessage()).status("Error").build();
         return new ResponseEntity<>(
                 response,
                 HttpStatus.UNAUTHORIZED
@@ -66,7 +76,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(UserStatusException.class)
     public ResponseEntity<?> handleUserStatusException(UserStatusException ex) {
-        APIErrorResponse response = APIErrorResponse.builder().message(ex.getMessage()).build();
+        APIErrorResponse response = APIErrorResponse.builder().message(ex.getMessage()).status("Error").build();
         return new ResponseEntity<>(
                 response,
                 HttpStatus.FORBIDDEN

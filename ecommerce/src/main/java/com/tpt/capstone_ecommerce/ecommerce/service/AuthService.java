@@ -16,4 +16,5 @@ public interface AuthService {
     EmailResponse forgotPasswordSendOtpService(ForgotPasswordRequest forgotPasswordRequest) throws IOException, MessagingException;
     String verifyOtpForResetPasswordService(String otp);
     String resetPasswordService(ResetPasswordRequest resetPasswordRequest);
+    LoginResponse handleLoginGoogleService(GoogleUserDTO googleUserDTO, String ipAddress, String userAgent);
 }
