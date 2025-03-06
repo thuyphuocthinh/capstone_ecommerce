@@ -1,4 +1,4 @@
-package com.tpt.capstone_ecommerce.ecommerce.dto.response;
+package com.tpt.capstone_ecommerce.ecommerce.dto.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class RefreshTokenResponse {
-    private String refreshToken;
-    private String accessToken;
+public class GoogleTokenRequest {
+    private String token;
 }

@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class APIErrorResponse {
-    private String status = "Error";
-    private String message;
+public class TokenResponse {
+    private String refreshToken;
+    private String accessToken;
 }

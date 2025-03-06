@@ -6,10 +6,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class APIErrorResponse {
-    private String status = "Error";
+@Builder
+public class EmailResponse {
     private String message;
 }

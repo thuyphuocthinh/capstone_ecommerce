@@ -1,6 +1,7 @@
 package com.tpt.capstone_ecommerce.ecommerce.auth.jwt;
 
 import com.tpt.capstone_ecommerce.ecommerce.constant.JwtConstant;
+import com.tpt.capstone_ecommerce.ecommerce.constant.UserErrorConstant;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -45,7 +46,7 @@ public class JwtFilter extends OncePerRequestFilter {
                 String email = String.valueOf(claims.get("email"));
                 List<String> roles = claims.get("authorities", List.class); // Lấy thẳng List<String>
                 List<GrantedAuthority> authorityList = roles.stream()
-                        .map(SimpleGrantedAuthority::new) // Chuyển thành GrantedAuthority
+                        .map(role -> new SimpleGrantedAuthority("ROLE_" + role)) // Thêm "ROLE_" vào trước role
                         .collect(Collectors.toList());
                 // CREATE AN AUTHENTICATION
                 Authentication auth = new UsernamePasswordAuthenticationToken(email, null, authorityList);
@@ -53,7 +54,7 @@ public class JwtFilter extends OncePerRequestFilter {
                 // SAVE AUTHENTICATION TO SECURITY CONTEXT
                 SecurityContextHolder.getContext().setAuthentication(auth);
             } catch (Exception e) {
-                throw new BadCredentialsException("Invalid access token");
+                throw new BadCredentialsException(UserErrorConstant.INVALID_ACCESS_TOKEN);
             }
         }
         filterChain.doFilter(request, response);

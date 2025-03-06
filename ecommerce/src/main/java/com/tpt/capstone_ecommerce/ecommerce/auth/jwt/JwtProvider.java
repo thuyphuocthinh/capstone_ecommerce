@@ -1,5 +1,6 @@
 package com.tpt.capstone_ecommerce.ecommerce.auth.jwt;
 
+import com.tpt.capstone_ecommerce.ecommerce.constant.UserErrorConstant;
 import com.tpt.capstone_ecommerce.ecommerce.entity.Token;
 import com.tpt.capstone_ecommerce.ecommerce.repository.TokenRepository;
 import io.jsonwebtoken.Claims;
@@ -84,24 +85,24 @@ public class JwtProvider {
 
     // verify refresh token
     public Token verifyRefreshToken(String refreshToken) {
-        Token refreshTokenObj = tokenRepository.findByRefreshToken(refreshToken).orElseThrow(() -> new RuntimeException("Refresh token not found"));
+        Token refreshTokenObj = tokenRepository.findByRefreshToken(refreshToken).orElseThrow(() -> new RuntimeException(UserErrorConstant.REFRESH_TOKEN_NOT_FOUND));
         if(refreshTokenObj.getExpiredAt().isBefore(
                 LocalDateTime.ofInstant(Instant.now(), ZoneId.systemDefault())
         )) {
             refreshTokenObj.setRevoked(true);
             tokenRepository.save(refreshTokenObj);
-            throw new RuntimeException("Refresh token expired");
+            throw new RuntimeException(UserErrorConstant.REFRESH_TOKEN_EXPIRED);
         }
         return refreshTokenObj;
     }
 
     // revoke refresh token
     public String revokeRefreshToken(String refreshToken) {
-        Token refreshTokenObj = tokenRepository.findByRefreshToken(refreshToken).orElseThrow(() -> new RuntimeException("Refresh token not found"));
+        Token refreshTokenObj = tokenRepository.findByRefreshToken(refreshToken).orElseThrow(() -> new RuntimeException(UserErrorConstant.REFRESH_TOKEN_NOT_FOUND));
         if(refreshTokenObj.getExpiredAt().isBefore(
                 LocalDateTime.ofInstant(Instant.now(), ZoneId.systemDefault())
         )) {
-            throw new RuntimeException("Refresh token expired");
+            throw new RuntimeException(UserErrorConstant.REFRESH_TOKEN_EXPIRED);
         } else {
             refreshTokenObj.setRevoked(true);
             tokenRepository.save(refreshTokenObj);

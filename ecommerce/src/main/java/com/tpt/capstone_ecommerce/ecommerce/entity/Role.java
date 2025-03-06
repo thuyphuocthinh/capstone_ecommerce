@@ -41,4 +41,9 @@ public class Role {
     @Column(nullable = true, name = "updated_at")
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    @Override
+    public String toString() {
+        return "Role " + id + " " + role;
+    }
 }
