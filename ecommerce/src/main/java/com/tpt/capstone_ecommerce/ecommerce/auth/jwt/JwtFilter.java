@@ -3,6 +3,8 @@ package com.tpt.capstone_ecommerce.ecommerce.auth.jwt;
 import com.tpt.capstone_ecommerce.ecommerce.constant.JwtConstant;
 import com.tpt.capstone_ecommerce.ecommerce.constant.UserErrorConstant;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.FilterChain;
@@ -53,8 +55,28 @@ public class JwtFilter extends OncePerRequestFilter {
                 log.info("authorityList: {}", authorityList);
                 // SAVE AUTHENTICATION TO SECURITY CONTEXT
                 SecurityContextHolder.getContext().setAuthentication(auth);
-            } catch (Exception e) {
-                throw new BadCredentialsException(UserErrorConstant.INVALID_ACCESS_TOKEN);
+            } catch (BadCredentialsException ex) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json");
+                response.getWriter().write("{\"status\": \"error\", \"message\": \"Invalid access token\"}");
+                return;
+            } catch (ExpiredJwtException ex) {
+                log.error("JWT Token has expired: {}", ex.getMessage());
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json");
+                response.getWriter().write("{\"status\": \"error\", \"message\": \"Token has expired\"}");
+                return;
+            } catch (JwtException ex) {
+                log.error("Invalid JWT Token: {}", ex.getMessage());
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json");
+                response.getWriter().write("{\"status\": \"error\", \"message\": \"Invalid access token\"}");
+                return;
+            } catch (Exception ex) {
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                response.setContentType("application/json");
+                response.getWriter().write("{\"status\": \"error\", \"message\": \"Internal Server Error\"}");
+                return;
             }
         }
         filterChain.doFilter(request, response);

@@ -1,7 +1,6 @@
 package com.tpt.capstone_ecommerce.ecommerce.config.security;
 
 import com.tpt.capstone_ecommerce.ecommerce.auth.jwt.JwtFilter;
-import com.tpt.capstone_ecommerce.ecommerce.service.impl.CustomUserDetailsService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,7 +17,6 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
@@ -26,6 +24,12 @@ import java.util.List;
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class WebSecurityConfig {
+    private final CustomAuthenticationEntryPoint authenticationEntryPoint;
+
+    public WebSecurityConfig(CustomAuthenticationEntryPoint authenticationEntryPoint) {
+        this.authenticationEntryPoint = authenticationEntryPoint;
+    }
+
     @Bean
     public AuthenticationManager authenticationManager(
             AuthenticationConfiguration authenticationConfiguration
@@ -69,6 +73,9 @@ public class WebSecurityConfig {
                         .redirectionEndpoint(redir ->
                                 redir.baseUri("/api/v1/auth/google/callback") // Nơi Google redirect về
                         )
+                )
+                .exceptionHandling(exception ->
+                        exception.authenticationEntryPoint(authenticationEntryPoint) // Thêm entry point vào đây
                 );
         return http.build();
     }

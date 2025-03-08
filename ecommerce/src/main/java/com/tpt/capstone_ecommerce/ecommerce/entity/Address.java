@@ -39,8 +39,8 @@ public class Address {
     @NotBlank(message = "Address phone cannot be blank")
     private String phone;
 
-    @Column(nullable = false, name = "is_default")
-    private boolean isDefault = false;
+    // @Column(nullable = false, name = "is_default")
+    // private boolean isDefault = false;
 
     // location
     @OneToOne(fetch = FetchType.EAGER)

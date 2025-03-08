@@ -2,6 +2,7 @@ package com.tpt.capstone_ecommerce.ecommerce.exception;
 
 import com.tpt.capstone_ecommerce.ecommerce.dto.response.APIErrorResponse;
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import jakarta.mail.MessagingException;
 import org.apache.coyote.BadRequestException;
@@ -29,8 +30,17 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(ExpiredJwtException.class)
+    public ResponseEntity<APIErrorResponse> handleExpiredJwt(ExpiredJwtException ex) {
+        APIErrorResponse response = APIErrorResponse.builder().message(ex.getMessage()).status("Error").build();
+        return new ResponseEntity<>(
+                response,
+                HttpStatus.UNAUTHORIZED
+        );
+    }
+
     @ExceptionHandler(BadRequestException.class)
-    public ResponseEntity<APIErrorResponse> handleBadCredentials(BadRequestException ex) {
+    public ResponseEntity<APIErrorResponse> handleBadRequest(BadRequestException ex) {
         APIErrorResponse response = APIErrorResponse.builder().message(ex.getMessage()).status("Error").build();
         return new ResponseEntity<>(
                 response,
@@ -49,15 +59,6 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({SignatureException.class, MalformedJwtException.class})
     public ResponseEntity<?> handleInvalidJwtToken(Exception ex) {
-        APIErrorResponse response = APIErrorResponse.builder().message(ex.getMessage()).status("Error").build();
-        return new ResponseEntity<>(
-                response,
-                HttpStatus.UNAUTHORIZED
-        );
-    }
-
-    @ExceptionHandler(ExpiredJwtException.class)
-    public ResponseEntity<?> handleExpiredJwtToken(ExpiredJwtException ex) {
         APIErrorResponse response = APIErrorResponse.builder().message(ex.getMessage()).status("Error").build();
         return new ResponseEntity<>(
                 response,
