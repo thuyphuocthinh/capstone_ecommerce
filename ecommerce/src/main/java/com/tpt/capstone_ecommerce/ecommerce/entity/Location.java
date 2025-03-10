@@ -35,7 +35,7 @@ public class Location {
     @Column(nullable = false, length = 10)
     private LOCATION_TYPE type;
 
-    @Column(nullable = false, length = 36, name = "parent_id")
+    @Column(length = 36, name = "parent_id")
     private String parentId;
 
     @Column(nullable = false, name = "created_at", updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
