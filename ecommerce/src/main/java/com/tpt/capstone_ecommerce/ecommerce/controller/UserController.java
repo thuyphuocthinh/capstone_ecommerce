@@ -70,7 +70,7 @@ public class UserController {
         return new ResponseEntity<>(this.userService.updateUserAddress(id, updateUserAddressRequest), HttpStatus.OK);
     }
 
-    @PatchMapping("/addresses/{id}")
+    @DeleteMapping("/addresses/{id}")
     public ResponseEntity<?> deleteUserAddressHandler(
             @PathVariable String id
     ) throws NotFoundException {
