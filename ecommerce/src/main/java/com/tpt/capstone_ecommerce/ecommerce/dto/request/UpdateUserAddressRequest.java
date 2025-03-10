@@ -1,16 +1,22 @@
 package com.tpt.capstone_ecommerce.ecommerce.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@Builder
-@AllArgsConstructor
 @NoArgsConstructor
-public class RefreshTokenRequest {
-    @NotBlank(message = "Refresh token cannot be blank")
-    private String refreshToken;
+@AllArgsConstructor
+@Builder
+public class UpdateUserAddressRequest {
+    private String fullName;
+
+    private String phone;
+
+    private String specificAddress;
+
+    private String locationId;
 }
