@@ -26,6 +26,7 @@ public class LocationController {
     @PostMapping
     public ResponseEntity<?> addLocationHandler(@Valid @RequestBody CreateLocationRequest createLocationRequest) throws BadRequestException {
         APISuccessResponse<?> apiSuccessResponse = APISuccessResponse.builder()
+                .message("Success")
                 .data(this.locationService.createLocation(createLocationRequest))
                 .build();
 
@@ -40,6 +41,7 @@ public class LocationController {
     public ResponseEntity<?> updateLocationHandler(@PathVariable String id, @Valid @RequestBody UpdateLocationRequest updateLocationRequest) throws NotFoundException {
         APISuccessResponse<?> apiSuccessResponse = APISuccessResponse.builder()
                 .data(this.locationService.updateLocation(id, updateLocationRequest))
+                .message("Success")
                 .build();
 
         return new ResponseEntity<>(
@@ -53,7 +55,7 @@ public class LocationController {
     public ResponseEntity<?> deleteLocationHandler(@PathVariable String id) throws NotFoundException {
         APISuccessResponse<?> apiSuccessResponse = APISuccessResponse.builder().data(
                 this.locationService.deleteLocation(id)
-        ).build();
+        ).message("Success").build();
         return new ResponseEntity<>(apiSuccessResponse, HttpStatus.OK);
     }
 
@@ -61,7 +63,7 @@ public class LocationController {
     public ResponseEntity<?> getAllProvincesHandler() {
         APISuccessResponse<?> apiSuccessResponse = APISuccessResponse.builder().data(
                 this.locationService.getListProvinces()
-        ).build();
+        ).message("Success").build();
         return new ResponseEntity<>(apiSuccessResponse, HttpStatus.OK);
     }
 
@@ -69,15 +71,15 @@ public class LocationController {
     public ResponseEntity<?> getAllDistrictsHandler(@PathVariable String id) {
         APISuccessResponse<?> apiSuccessResponse = APISuccessResponse.builder().data(
                 this.locationService.getListDistricts(id)
-        ).build();
+        ).message("Success").build();
         return new ResponseEntity<>(apiSuccessResponse, HttpStatus.OK);
     }
 
-    @GetMapping("/provinces/districts/{id}")
+    @GetMapping("/provinces/districts/{id}/wards")
     public ResponseEntity<?> getAllWardsHandler(@PathVariable String id) {
         APISuccessResponse<?> apiSuccessResponse = APISuccessResponse.builder().data(
                 this.locationService.getListWards(id)
-        ).build();
+        ).message("Success").build();
         return new ResponseEntity<>(apiSuccessResponse, HttpStatus.OK);
     }
 }

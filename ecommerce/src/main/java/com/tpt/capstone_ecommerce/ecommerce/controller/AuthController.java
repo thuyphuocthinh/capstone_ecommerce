@@ -83,7 +83,6 @@ public class AuthController {
     }
 
     // toi ve test lai googleVerifyTokenHandler (FE gui token len BE verify => oke thi tra ve cap token, ko oke thi 401)
-
     @PostMapping("/google/callback")
     public void googleCallbackHandler(
             @RequestParam(required = false) String code,

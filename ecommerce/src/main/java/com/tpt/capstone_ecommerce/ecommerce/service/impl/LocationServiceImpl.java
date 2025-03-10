@@ -26,7 +26,7 @@ public class LocationServiceImpl implements LocationService {
 
     @Override
     public String getFullLocation(String locationId) {
-        Location location = locationRepository.findById(locationId).orElseThrow(() -> new NotFoundException("Location not found"));
+        Location location = locationRepository.findById(locationId).orElseThrow(() -> new NotFoundException(LocationErrorConstant.LOCATION_NOT_FOUND));
         if(location.getParentId() == null) {
             return location.getName();
         }
@@ -35,11 +35,11 @@ public class LocationServiceImpl implements LocationService {
 
     @Override
     public List<String> getLocationAllIds(String locationId) {
-        Location location = locationRepository.findById(locationId).orElseThrow(() -> new NotFoundException("Location not found"));
+        Location location = locationRepository.findById(locationId).orElseThrow(() -> new NotFoundException(LocationErrorConstant.LOCATION_NOT_FOUND));
         List<String> list = new ArrayList<>();
         list.add(location.getId());
         while(location.getParentId() != null) {
-            location = locationRepository.findById(locationId).orElseThrow(() -> new NotFoundException("Location not found"));
+            location = locationRepository.findById(location.getParentId()).orElseThrow(() -> new NotFoundException(LocationErrorConstant.LOCATION_NOT_FOUND));
             list.add(location.getId());
         }
         return list;
@@ -54,6 +54,10 @@ public class LocationServiceImpl implements LocationService {
             Location location = this.locationRepository.findByName(locationName);
             if(location != null) {
                 throw new BadRequestException(LocationErrorConstant.LOCATION_ALREADY_EXISTS);
+            }
+        } else {
+            if(locationParentId == null) {
+                throw new BadRequestException(LocationErrorConstant.LOCATION_PARENT_ID_EMPTY);
             }
         }
 

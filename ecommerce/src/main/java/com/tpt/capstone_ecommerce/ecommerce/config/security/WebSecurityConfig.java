@@ -64,6 +64,7 @@ public class WebSecurityConfig {
                                 "/api/v1/auth/forgot-password/send-otp",
                                 "/api/v1/auth/forgot-password/verify-otp",
                                 "/api/v1/auth/forgot-password/reset",
+                                "/api/v1/auth/refresh-token",
                                 "/api/v1/auth/google/verify-token"
                         ).permitAll()
                         .requestMatchers("/error").permitAll() // 🟢 Cho phép các API này không cần auth

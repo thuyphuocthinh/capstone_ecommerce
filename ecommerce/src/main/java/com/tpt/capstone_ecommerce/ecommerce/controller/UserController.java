@@ -59,7 +59,12 @@ public class UserController {
             @PathVariable String id,
             @RequestBody CreateUserAddressRequest createUserAddressRequest
     ) throws NotFoundException {
-        return new ResponseEntity<>(this.userService.createUserAddress(id, createUserAddressRequest), HttpStatus.OK);
+        APISuccessResponse<Object> apiSuccessResponse = APISuccessResponse
+                .builder()
+                .message("Success")
+                .data(this.userService.createUserAddress(id, createUserAddressRequest))
+                .build();
+        return new ResponseEntity<>(apiSuccessResponse, HttpStatus.OK);
     }
 
     @PatchMapping("/addresses/{id}")
@@ -67,21 +72,36 @@ public class UserController {
             @PathVariable String id,
             @RequestBody UpdateUserAddressRequest updateUserAddressRequest
             ) throws NotFoundException {
-        return new ResponseEntity<>(this.userService.updateUserAddress(id, updateUserAddressRequest), HttpStatus.OK);
+        APISuccessResponse<Object> apiSuccessResponse = APISuccessResponse
+                .builder()
+                .message("Success")
+                .data(this.userService.updateUserAddress(id, updateUserAddressRequest))
+                .build();
+        return new ResponseEntity<>(apiSuccessResponse, HttpStatus.OK);
     }
 
     @DeleteMapping("/addresses/{id}")
     public ResponseEntity<?> deleteUserAddressHandler(
             @PathVariable String id
     ) throws NotFoundException {
-        return new ResponseEntity<>(this.userService.deleteUserAddress(id), HttpStatus.OK);
+        APISuccessResponse<Object> apiSuccessResponse = APISuccessResponse
+                .builder()
+                .message("Success")
+                .data(this.userService.deleteUserAddress(id))
+                .build();
+        return new ResponseEntity<>(apiSuccessResponse, HttpStatus.OK);
     }
 
     @GetMapping("/addresses/{id}")
     public ResponseEntity<?> getUserAddressDetailHandler(
             @PathVariable String id
     ) throws NotFoundException {
-        return new ResponseEntity<>(this.userService.getUserAddressDetail(id), HttpStatus.OK);
+        APISuccessResponse<Object> apiSuccessResponse = APISuccessResponse
+                .builder()
+                .message("Success")
+                .data(this.userService.getUserAddressDetail(id))
+                .build();
+        return new ResponseEntity<>(apiSuccessResponse, HttpStatus.OK);
     }
 
     @PatchMapping("/profile")

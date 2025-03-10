@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class CreateLocationRequest {
     @NotBlank(message = "Location name cannot be blank")
-    @Size(min = 8, message = "Location name min length is 2")
+    @Size(min = 2, message = "Location name min length is 2")
     private String name;
 
     private String parentId;

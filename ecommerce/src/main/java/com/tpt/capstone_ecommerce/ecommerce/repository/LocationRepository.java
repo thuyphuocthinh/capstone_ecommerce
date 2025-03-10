@@ -18,7 +18,7 @@ public interface LocationRepository extends JpaRepository<Location, String> {
 
     @Modifying
     @Transactional
-    @Query(value = "DELETE FROM locations WHERE id = ?1 OR parentId = ?1", nativeQuery = true)
+    @Query(value = "DELETE FROM locations WHERE id = ?1 OR parent_id = ?1", nativeQuery = true)
     void deleteProvinceOrDistrict(String locationId);
 
     List<Location> findAllByType(LOCATION_TYPE type);
