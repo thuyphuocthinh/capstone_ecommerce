@@ -125,7 +125,7 @@ public class UserProfileImpl implements UserService {
         List<UserOrderResponse> orderResponses = orders.stream().map(UserOrderResponse::new).toList();
 
         PaginationMetadata paginationMetadata = PaginationMetadata.builder()
-                .currentPage(orderPage.getNumber())
+                .currentPage(orderPage.getNumber() + 1)
                 .pageSize(orderPage.getSize())
                 .totalPages(orderPage.getTotalPages())
                 .totalItems((int)orderPage.getTotalElements())
@@ -161,7 +161,7 @@ public class UserProfileImpl implements UserService {
         }).toList();
 
         PaginationMetadata paginationMetadata = PaginationMetadata.builder()
-                .currentPage(addressesPage.getNumber())
+                .currentPage(addressesPage.getNumber() + 1)
                 .pageSize(addressesPage.getSize())
                 .totalPages(addressesPage.getTotalPages())
                 .totalItems((int)addressesPage.getTotalElements())

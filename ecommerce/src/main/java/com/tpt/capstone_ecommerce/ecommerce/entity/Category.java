@@ -26,6 +26,11 @@ public class Category {
     @Column(columnDefinition = "VARCHAR(36)", updatable = false, nullable = false)
     private String id;
 
+    @Column(nullable = false, name = "name")
+    @NotBlank(message = "Category name cannot be blank")
+    @Size(min = 1, max = 255, message = "Category name length is invalid")
+    private String name;
+
     @Lob
     @Column(nullable = false, columnDefinition = "TEXT", name = "description")
     private String description;
