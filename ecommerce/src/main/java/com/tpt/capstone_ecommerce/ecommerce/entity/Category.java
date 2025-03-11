@@ -48,7 +48,7 @@ public class Category {
     @Size(min = 1, max = 255, message = "Slug length is invalid")
     private String slug;
 
-    @Column(nullable = false, length = 36, name = "parent_id")
+    @Column(length = 36, name = "parent_id")
     private String parentId;
 
     @Column(nullable = false, name = "created_at", updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")

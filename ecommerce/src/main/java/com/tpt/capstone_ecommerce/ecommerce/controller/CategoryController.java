@@ -25,7 +25,7 @@ public class CategoryController {
     }
 
     @PostMapping
-    public ResponseEntity<?> createBrandHandler(@Valid @ModelAttribute CreateCategoryRequest request) throws IOException {
+    public ResponseEntity<?> createCategoryHandler(@Valid @ModelAttribute CreateCategoryRequest request) throws IOException {
         APISuccessResponse<?> apiSuccessResponse = APISuccessResponse.builder()
                 .data(this.categoryService.createCategory(request))
                 .message("Success")
@@ -34,7 +34,7 @@ public class CategoryController {
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<?> updateBrandHandler(
+    public ResponseEntity<?> updateCategoryHandler(
             @PathVariable String id,
             @ModelAttribute UpdateCategoryRequest request) throws NotFoundException, IOException {
         APISuccessResponse<?> apiSuccessResponse = APISuccessResponse.builder()
@@ -45,7 +45,7 @@ public class CategoryController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getBrandDetailHandler(@PathVariable String id) throws NotFoundException {
+    public ResponseEntity<?> getCategoryDetailHandler(@PathVariable String id) throws NotFoundException {
         APISuccessResponse<?> apiSuccessResponse = APISuccessResponse.builder()
                 .data(this.categoryService.getCategoryDetail(id))
                 .message("Success")
@@ -54,7 +54,7 @@ public class CategoryController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteBrandHandler(@PathVariable String id) throws NotFoundException {
+    public ResponseEntity<?> deleteCategoryHandler(@PathVariable String id) throws NotFoundException {
         APISuccessResponse<?> apiSuccessResponse = APISuccessResponse.builder()
                 .data(this.categoryService.deleteCategory(id))
                 .message("Success")
@@ -63,10 +63,36 @@ public class CategoryController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getListBrandsHandler(
+    public ResponseEntity<?> getListCategoriesHandler(
             @RequestParam(name = "pageNumber", required = false, defaultValue = AppConstant.PAGE_NUMBER) Integer pageNumber,
             @RequestParam(name = "pageSize", required = false, defaultValue = AppConstant.PAGE_SIZE) Integer pageSize
     ) throws NotFoundException {
         return new ResponseEntity<>(this.categoryService.getAllCategories(pageNumber, pageSize), HttpStatus.OK);
+    }
+
+    @GetMapping("/primary-category/{id}/sub-categories")
+    public ResponseEntity<?> getListSubCategoriesHandler(
+            @PathVariable String id,
+            @RequestParam(name = "pageNumber", required = false, defaultValue = AppConstant.PAGE_NUMBER) Integer pageNumber,
+            @RequestParam(name = "pageSize", required = false, defaultValue = AppConstant.PAGE_SIZE) Integer pageSize
+    ) throws NotFoundException {
+        return new ResponseEntity<>(this.categoryService.getCategoriesByParentId(id, pageNumber, pageSize), HttpStatus.OK);
+    }
+
+    @GetMapping("/primary-categories")
+    public ResponseEntity<?> getListPrimaryCategoriesHandler(
+            @RequestParam(name = "pageNumber", required = false, defaultValue = AppConstant.PAGE_NUMBER) Integer pageNumber,
+            @RequestParam(name = "pageSize", required = false, defaultValue = AppConstant.PAGE_SIZE) Integer pageSize
+    ) throws NotFoundException {
+        return new ResponseEntity<>(this.categoryService.getParentCategories(pageNumber, pageSize), HttpStatus.OK);
+    }
+
+    @GetMapping("/nested")
+    public ResponseEntity<?> getListNestedCategoriesHandler()  {
+        APISuccessResponse<?> apiSuccessResponse = APISuccessResponse.builder()
+                .data(this.categoryService.getNestedCategories())
+                .message("Success")
+                .build();
+        return new ResponseEntity<>(apiSuccessResponse, HttpStatus.OK);
     }
 }

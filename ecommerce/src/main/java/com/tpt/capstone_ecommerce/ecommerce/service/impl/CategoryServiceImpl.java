@@ -3,10 +3,7 @@ package com.tpt.capstone_ecommerce.ecommerce.service.impl;
 import com.tpt.capstone_ecommerce.ecommerce.constant.CategoryErrorConstant;
 import com.tpt.capstone_ecommerce.ecommerce.dto.request.CreateCategoryRequest;
 import com.tpt.capstone_ecommerce.ecommerce.dto.request.UpdateCategoryRequest;
-import com.tpt.capstone_ecommerce.ecommerce.dto.response.APISuccessResponseWithMetadata;
-import com.tpt.capstone_ecommerce.ecommerce.dto.response.BrandDetailResponse;
-import com.tpt.capstone_ecommerce.ecommerce.dto.response.CategoryDetailResponse;
-import com.tpt.capstone_ecommerce.ecommerce.dto.response.PaginationMetadata;
+import com.tpt.capstone_ecommerce.ecommerce.dto.response.*;
 import com.tpt.capstone_ecommerce.ecommerce.entity.Brand;
 import com.tpt.capstone_ecommerce.ecommerce.entity.Category;
 import com.tpt.capstone_ecommerce.ecommerce.exception.NotFoundException;
@@ -23,8 +20,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -66,6 +65,7 @@ public class CategoryServiceImpl implements CategoryService {
         Category category = this.categoryRepository.findById(id).orElseThrow(() -> new NotFoundException(CategoryErrorConstant.CATEGORY_NOT_FOUND));
 
         return CategoryDetailResponse.builder()
+                .id(category.getId())
                 .imageUrl(category.getImageUrl())
                 .description(category.getDescription())
                 .parentId(category.getParentId())
@@ -152,4 +152,103 @@ public class CategoryServiceImpl implements CategoryService {
                 .metadata(paginationMetadata)
                 .build();
     }
+
+    @Override
+    public APISuccessResponseWithMetadata<?> getCategoriesByParentId(String parentId, Integer pageNumber, Integer pageSize) throws NotFoundException {
+        this.categoryRepository.findById(parentId).orElseThrow(() -> new NotFoundException(CategoryErrorConstant.CATEGORY_NOT_FOUND));
+
+        Pageable page = PageRequest.of(Math.max(0, pageNumber - 1), pageSize);
+        Page<Category> categoryPage = this.categoryRepository.findAllByParentId(parentId, page);
+
+        log.info("addresses res:::: {}", categoryPage);
+
+        List<Category> categories = categoryPage.getContent();
+
+        List<CategoryDetailResponse> categoryDetailResponses = categories.stream().map(category -> CategoryDetailResponse.builder()
+                .id(category.getId())
+                .slug(category.getSlug())
+                .description(category.getDescription())
+                .name(category.getName())
+                .imageUrl(category.getImageUrl())
+                .parentId(category.getParentId())
+                .build()).toList();
+
+        PaginationMetadata paginationMetadata = PaginationMetadata.builder()
+                .currentPage(categoryPage.getNumber() + 1)
+                .pageSize(categoryPage.getSize())
+                .totalPages(categoryPage.getTotalPages())
+                .totalItems((int)categoryPage.getTotalElements())
+                .build();
+
+        return APISuccessResponseWithMetadata.builder()
+                .message("Success")
+                .data(categoryDetailResponses)
+                .metadata(paginationMetadata)
+                .build();
+    }
+
+    @Override
+    public APISuccessResponseWithMetadata<?> getParentCategories(Integer pageNumber, Integer pageSize) throws NotFoundException {
+        Pageable page = PageRequest.of(Math.max(0, pageNumber - 1), pageSize);
+        Page<Category> categoryPage = this.categoryRepository.findAllByParentId(null, page);
+
+        log.info("addresses res:::: {}", categoryPage);
+
+        List<Category> categories = categoryPage.getContent();
+
+        List<CategoryDetailResponse> categoryDetailResponses = categories.stream().map(category -> CategoryDetailResponse.builder()
+                .id(category.getId())
+                .slug(category.getSlug())
+                .description(category.getDescription())
+                .name(category.getName())
+                .imageUrl(category.getImageUrl())
+                .parentId(category.getParentId())
+                .build()).toList();
+
+        PaginationMetadata paginationMetadata = PaginationMetadata.builder()
+                .currentPage(categoryPage.getNumber() + 1)
+                .pageSize(categoryPage.getSize())
+                .totalPages(categoryPage.getTotalPages())
+                .totalItems((int)categoryPage.getTotalElements())
+                .build();
+
+        return APISuccessResponseWithMetadata.builder()
+                .message("Success")
+                .data(categoryDetailResponses)
+                .metadata(paginationMetadata)
+                .build();
+    }
+
+    @Override
+    public List<CategoryNestedResponse> getNestedCategories() throws NotFoundException {
+
+        // O(n^2) => oke in this case ?
+        // Giam xuong O(n) => find All => map & filter
+        List<Category> allCategories = this.categoryRepository.findAll();
+
+        Map<String, List<Category>> categoryMap = allCategories.stream()
+                .filter(c -> c.getParentId() != null)
+                .collect(Collectors.groupingBy(Category::getParentId)); // O(n)
+
+        List<CategoryNestedResponse> responses = allCategories.stream()
+                .filter(c -> c.getParentId() == null) // Lọc danh mục cha
+                .map(parent -> {
+                    List<CategoryDetailResponse> detailResponses = categoryMap.getOrDefault(parent.getId(), new ArrayList<>())
+                            .stream()
+                            .map(category -> CategoryDetailResponse.builder()
+                                    .id(category.getId())
+                                    .slug(category.getSlug())
+                                    .description(category.getDescription())
+                                    .name(category.getName())
+                                    .imageUrl(category.getImageUrl())
+                                    .parentId(category.getParentId())
+                                    .build())
+                            .toList();
+                    return new CategoryNestedResponse(parent.getId(), parent.getName(), parent.getSlug(), detailResponses);
+                })
+                .toList();
+
+        return responses;
+    }
+    // N + 1 query problem
 }
