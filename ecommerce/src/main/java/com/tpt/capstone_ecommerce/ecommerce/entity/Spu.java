@@ -41,7 +41,7 @@ public class Spu {
     private String slug;
 
     // shop
-    @OneToOne(fetch = FetchType.EAGER)
+    @ManyToOne
     @JoinColumn(name = "shop_id", nullable = false)
     private Shop shop;
 
