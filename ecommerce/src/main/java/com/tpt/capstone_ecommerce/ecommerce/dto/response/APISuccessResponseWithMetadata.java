@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class APISuccessReponseWithMetadata<T> {
+public class APISuccessResponseWithMetadata<T> {
     private String message;
     T data;
     PaginationMetadata metadata;

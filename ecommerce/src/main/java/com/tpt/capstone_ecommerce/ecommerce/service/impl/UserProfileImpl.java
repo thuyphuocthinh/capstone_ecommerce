@@ -19,8 +19,8 @@ import com.tpt.capstone_ecommerce.ecommerce.repository.OrderRepository;
 import com.tpt.capstone_ecommerce.ecommerce.repository.UserRepository;
 import com.tpt.capstone_ecommerce.ecommerce.service.LocationService;
 import com.tpt.capstone_ecommerce.ecommerce.service.UserService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.BadRequestException;
-import org.aspectj.weaver.ast.Or;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -28,9 +28,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class UserProfileImpl implements UserService {
     private final UserRepository userRepository;
 
@@ -114,10 +114,10 @@ public class UserProfileImpl implements UserService {
     }
 
     @Override
-    public APISuccessReponseWithMetadata<?> getOrdersByUser(String userId, Integer pageNumber, Integer pageSize) throws NotFoundException {
+    public APISuccessResponseWithMetadata<?> getOrdersByUser(String userId, Integer pageNumber, Integer pageSize) throws NotFoundException {
         User user = this.userRepository.findById(userId).orElseThrow(() -> new NotFoundException("User not found"));
 
-        Pageable page = PageRequest.of(pageNumber, pageSize);
+        Pageable page = PageRequest.of(Math.max(0, pageNumber - 1), pageSize);
         Page<Order> orderPage = this.orderRepository.findAllByUser(user, page);
 
         List<Order> orders = orderPage.getContent();
@@ -131,7 +131,7 @@ public class UserProfileImpl implements UserService {
                 .totalItems((int)orderPage.getTotalElements())
                 .build();
 
-        return APISuccessReponseWithMetadata.builder()
+        return APISuccessResponseWithMetadata.builder()
                 .message("Success")
                 .data(orderResponses)
                 .metadata(paginationMetadata)
@@ -139,17 +139,21 @@ public class UserProfileImpl implements UserService {
     }
 
     @Override
-    public APISuccessReponseWithMetadata<?> getAddressesByUser(String userId, Integer pageNumber, Integer pageSize) throws NotFoundException {
+    public APISuccessResponseWithMetadata<?> getAddressesByUser(String userId, Integer pageNumber, Integer pageSize) throws NotFoundException {
         User user = this.userRepository.findById(userId).orElseThrow(() -> new NotFoundException("User not found"));
 
-        Pageable page = PageRequest.of(pageNumber, pageSize);
-        Page<Address> addressesPage = this.addressRepository.findAllByUser(user, page);
+        log.info("user res:::: {}", user.getEmail());
+
+        Pageable page = PageRequest.of(Math.max(0, pageNumber - 1), pageSize);
+        Page<Address> addressesPage = this.addressRepository.findAllByUser(userId, page);
+
+        log.info("addresses res:::: {}", addressesPage);
 
         List<Address> addresses = addressesPage.getContent();
 
         List<UserAddressResponse> addressResponses = addresses.stream().map(address -> {
             UserAddressResponse userAddressResponse = new UserAddressResponse();
-            userAddressResponse.setFullAddress(address.getSpecificAddress() + ", " + this.locationService.getFullLocation(address.getId()));
+            userAddressResponse.setFullAddress(address.getSpecificAddress() + ", " + this.locationService.getFullLocation(address.getLocation().getId()));
             userAddressResponse.setId(address.getId());
             userAddressResponse.setFullName(address.getFullName());
             userAddressResponse.setPhone(address.getPhone());
@@ -163,7 +167,7 @@ public class UserProfileImpl implements UserService {
                 .totalItems((int)addressesPage.getTotalElements())
                 .build();
 
-        return APISuccessReponseWithMetadata.builder()
+        return APISuccessResponseWithMetadata.builder()
                 .message("Success")
                 .data(addressResponses)
                 .metadata(paginationMetadata)
@@ -179,6 +183,7 @@ public class UserProfileImpl implements UserService {
         newAddress.setUser(user);
         newAddress.setPhone(createUserAddressRequest.getPhone());
         newAddress.setSpecificAddress(createUserAddressRequest.getSpecificAddress());
+        newAddress.setFullName(createUserAddressRequest.getFullName());
         newAddress.setLocation(location);
 
         Address savedAddress = this.addressRepository.save(newAddress);
@@ -227,6 +232,7 @@ public class UserProfileImpl implements UserService {
                 .id(addressId)
                 .phone(address.getPhone())
                 .fullName(address.getFullName())
+                .specificAddress(address.getSpecificAddress())
                 .locationProvinceId(listLocationIds.get(2))
                 .locationDistrictId(listLocationIds.get(1))
                 .locationWardId(listLocationIds.get(0))
