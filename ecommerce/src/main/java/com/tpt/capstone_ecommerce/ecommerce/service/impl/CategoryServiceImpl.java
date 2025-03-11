@@ -230,7 +230,8 @@ public class CategoryServiceImpl implements CategoryService {
                 .filter(c -> c.getParentId() != null)
                 .collect(Collectors.groupingBy(Category::getParentId)); // O(n)
 
-        List<CategoryNestedResponse> responses = allCategories.stream()
+        // Lọc danh mục cha
+        return allCategories.stream()
                 .filter(c -> c.getParentId() == null) // Lọc danh mục cha
                 .map(parent -> {
                     List<CategoryDetailResponse> detailResponses = categoryMap.getOrDefault(parent.getId(), new ArrayList<>())
@@ -247,8 +248,6 @@ public class CategoryServiceImpl implements CategoryService {
                     return new CategoryNestedResponse(parent.getId(), parent.getName(), parent.getSlug(), detailResponses);
                 })
                 .toList();
-
-        return responses;
     }
     // N + 1 query problem
 }
