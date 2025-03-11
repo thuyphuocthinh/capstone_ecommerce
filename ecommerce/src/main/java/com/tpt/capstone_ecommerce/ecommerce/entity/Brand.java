@@ -26,6 +26,11 @@ public class Brand {
     @Column(columnDefinition = "VARCHAR(36)", updatable = false, nullable = false)
     private String id;
 
+    @Column(nullable = false, name = "name")
+    @NotBlank(message = "Brand name cannot be blank")
+    @Size(min = 1, max = 255, message = "Brand name length is invalid")
+    private String name;
+
     @Lob
     @Column(nullable = false, columnDefinition = "TEXT", name = "description")
     private String description;
@@ -37,14 +42,10 @@ public class Brand {
             message = "Invalid URL format")
     private String imageUrl;
 
-
     @Column(nullable = false, unique = true, name = "slug")
     @NotBlank(message = "Brand slug cannot be blank")
     @Size(min = 1, max = 255, message = "Slug length is invalid")
     private String slug;
-
-    @Column(nullable = false, length = 36, name = "parent_id")
-    private String parentId;
 
     @Column(nullable = false, name = "created_at", updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     @CreationTimestamp
