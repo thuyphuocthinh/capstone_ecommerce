@@ -1,7 +1,11 @@
 package com.tpt.capstone_ecommerce.ecommerce.entity;
 
+import com.tpt.capstone_ecommerce.ecommerce.enums.SKU_STATUS;
+import com.tpt.capstone_ecommerce.ecommerce.enums.SPU_STATUS;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -40,8 +44,21 @@ public class Spu {
     @Size(min = 1, max = 255, message = "SPU slug length is invalid")
     private String slug;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 10, name = "status")
+    @NotNull(message = "Status cannot be null")
+    private SPU_STATUS status = SPU_STATUS.ACTIVE;
+
+    @Column(nullable = false, name = "image_url", length = 500)
+    @NotBlank(message = "SPU image cannot be blank")
+    @Size(max = 500, message = "SPU image URL is too long")
+    @Pattern(regexp = "^(https?:\\/\\/)?([\\w-]+\\.)+[\\w-]{2,}(\\/.*)?$",
+            message = "Invalid URL format")
+    private String imageUrl;
+
+
     // shop
-    @OneToOne(fetch = FetchType.EAGER)
+    @ManyToOne
     @JoinColumn(name = "shop_id", nullable = false)
     private Shop shop;
 
@@ -65,4 +82,11 @@ public class Spu {
     @Column(nullable = true, name = "updated_at")
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    @PrePersist
+    public void prePersist() {
+        if (status == null) {
+            status = SPU_STATUS.ACTIVE;
+        }
+    }
 }

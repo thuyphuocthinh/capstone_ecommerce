@@ -85,20 +85,21 @@ public class JwtProvider {
 
     // verify refresh token
     public Token verifyRefreshToken(String refreshToken) {
-        Token refreshTokenObj = tokenRepository.findByRefreshToken(refreshToken).orElseThrow(() -> new RuntimeException(UserErrorConstant.REFRESH_TOKEN_NOT_FOUND));
+        Token refreshTokenObj = tokenRepository.findByRefreshToken(refreshToken).orElseThrow(() -> new RuntimeException(UserErrorConstant.INVALID_REFRESH_TOKEN));
         if(refreshTokenObj.getExpiredAt().isBefore(
                 LocalDateTime.ofInstant(Instant.now(), ZoneId.systemDefault())
         )) {
-            refreshTokenObj.setRevoked(true);
-            tokenRepository.save(refreshTokenObj);
             throw new RuntimeException(UserErrorConstant.REFRESH_TOKEN_EXPIRED);
+        }
+        if(refreshTokenObj.isRevoked()) {
+            throw new RuntimeException(UserErrorConstant.INVALID_REFRESH_TOKEN);
         }
         return refreshTokenObj;
     }
 
     // revoke refresh token
     public String revokeRefreshToken(String refreshToken) {
-        Token refreshTokenObj = tokenRepository.findByRefreshToken(refreshToken).orElseThrow(() -> new RuntimeException(UserErrorConstant.REFRESH_TOKEN_NOT_FOUND));
+        Token refreshTokenObj = tokenRepository.findByRefreshToken(refreshToken).orElseThrow(() -> new RuntimeException(UserErrorConstant.INVALID_REFRESH_TOKEN));
         if(refreshTokenObj.getExpiredAt().isBefore(
                 LocalDateTime.ofInstant(Instant.now(), ZoneId.systemDefault())
         )) {
