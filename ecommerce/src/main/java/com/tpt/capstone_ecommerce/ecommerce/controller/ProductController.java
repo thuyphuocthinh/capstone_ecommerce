@@ -1,11 +1,16 @@
 package com.tpt.capstone_ecommerce.ecommerce.controller;
 
 import com.tpt.capstone_ecommerce.ecommerce.constant.AppConstant;
+import com.tpt.capstone_ecommerce.ecommerce.constant.SkuErrorConstant;
 import com.tpt.capstone_ecommerce.ecommerce.constant.SpuErrorConstant;
+import com.tpt.capstone_ecommerce.ecommerce.dto.request.CreateSkuRequest;
 import com.tpt.capstone_ecommerce.ecommerce.dto.request.CreateSpuRequest;
+import com.tpt.capstone_ecommerce.ecommerce.dto.request.UpdateSkuRequest;
 import com.tpt.capstone_ecommerce.ecommerce.dto.request.UpdateSpuRequest;
 import com.tpt.capstone_ecommerce.ecommerce.dto.response.APISuccessResponse;
+import com.tpt.capstone_ecommerce.ecommerce.enums.SKU_STATUS;
 import com.tpt.capstone_ecommerce.ecommerce.enums.SPU_STATUS;
+import com.tpt.capstone_ecommerce.ecommerce.service.SkuService;
 import com.tpt.capstone_ecommerce.ecommerce.service.SpuService;
 import jakarta.validation.Valid;
 import org.apache.coyote.BadRequestException;
@@ -21,8 +26,11 @@ public class ProductController {
 
     private final SpuService spuService;
 
-    public ProductController(SpuService spuService) {
+    private final SkuService skuService;
+
+    public ProductController(SpuService spuService, SkuService skuService) {
         this.spuService = spuService;
+        this.skuService = skuService;
     }
 
     @PostMapping("/spus")
@@ -89,6 +97,68 @@ public class ProductController {
 
         APISuccessResponse<Object> apiResponse = APISuccessResponse.builder()
                 .data(spuService.deleteSpu(id, isHard))
+                .message("Success")
+                .build();
+        return new ResponseEntity<>(apiResponse, HttpStatus.OK);
+    }
+
+    @PostMapping("/spus/{id}/skus")
+    public ResponseEntity<?> createSkuHandler(@Valid @ModelAttribute CreateSkuRequest request, @PathVariable String id) throws IOException {
+        APISuccessResponse<Object> apiResponse = APISuccessResponse.builder()
+                .data(skuService.addSku(id, request))
+                .message("Success")
+                .build();
+        return new ResponseEntity<>(apiResponse, HttpStatus.CREATED);
+    }
+
+    @GetMapping("/spus/skus/{id}")
+    public ResponseEntity<?> getSkuDetailHandler(@PathVariable String id) throws IOException {
+        APISuccessResponse<Object> apiResponse = APISuccessResponse.builder()
+                .data(skuService.getSkuDetail(id))
+                .message("Success")
+                .build();
+        return new ResponseEntity<>(apiResponse, HttpStatus.OK);
+    }
+
+    @GetMapping("/spus/{id}/skus")
+    public ResponseEntity<?> getListSkusBySpuHandler(@PathVariable String id) throws IOException {
+        APISuccessResponse<Object> apiResponse = APISuccessResponse.builder()
+                .data(skuService.getListSkusBySpuId(id))
+                .message("Success")
+                .build();
+        return new ResponseEntity<>(apiResponse, HttpStatus.OK);
+    }
+
+    @PatchMapping("/spus/skus/{id}")
+    public ResponseEntity<?> updateSkuHandler(@PathVariable String id, @ModelAttribute UpdateSkuRequest request) throws IOException {
+        APISuccessResponse<Object> apiResponse = APISuccessResponse.builder()
+                .data(skuService.updateSku(id, request))
+                .message("Success")
+                .build();
+        return new ResponseEntity<>(apiResponse, HttpStatus.OK);
+    }
+
+    @DeleteMapping("/spus/skus/{id}/hard/{isHard}")
+    public ResponseEntity<?> deleteSkuHandler(@PathVariable String id, @PathVariable Boolean isHard) throws BadRequestException {
+        if(isHard == null){
+            throw new BadRequestException(SpuErrorConstant.LACK_IS_HARD);
+        }
+
+        APISuccessResponse<Object> apiResponse = APISuccessResponse.builder()
+                .data(skuService.deleteSku(id, isHard))
+                .message("Success")
+                .build();
+        return new ResponseEntity<>(apiResponse, HttpStatus.OK);
+    }
+
+    @PatchMapping("/spus/skus/{id}/change-status/{status}")
+    public ResponseEntity<?> updateSkuStatusHandler(@PathVariable String id, @PathVariable String status) throws IOException {
+        if(!status.equals(SKU_STATUS.ACTIVE.name()) && !status.equals(SKU_STATUS.INACTIVE.name())) {
+            throw new BadRequestException(SkuErrorConstant.INVALID_STATUS);
+        }
+
+        APISuccessResponse<Object> apiResponse = APISuccessResponse.builder()
+                .data(skuService.changeStatus(id, status))
                 .message("Success")
                 .build();
         return new ResponseEntity<>(apiResponse, HttpStatus.OK);

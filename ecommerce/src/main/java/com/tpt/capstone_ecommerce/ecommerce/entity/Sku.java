@@ -30,9 +30,9 @@ public class Sku {
     @Size(min = 1, max = 255, message = "SPU name length is invalid")
     private String name;
 
-    @Lob
-    @Column(nullable = false, columnDefinition = "TEXT", name = "description")
-    private String description;
+    // @Lob
+    // @Column(nullable = false, columnDefinition = "TEXT", name = "description")
+    // private String description;
 
     @Column(nullable = false, name = "quantity")
     @Min(value = 0, message = "SKU quantity must be greater than or equal to zero")
@@ -47,9 +47,9 @@ public class Sku {
     private double discount = 0.0;
 
     // shop id
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "shop_id", nullable = false)
-    private Shop shop;
+    // @OneToOne(cascade = CascadeType.ALL)
+    // @JoinColumn(name = "shop_id", nullable = false)
+    // private Shop shop;
 
     // spu id
     @ManyToOne
