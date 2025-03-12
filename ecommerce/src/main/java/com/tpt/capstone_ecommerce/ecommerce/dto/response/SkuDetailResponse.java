@@ -19,4 +19,5 @@ public class SkuDetailResponse {
     private String color;
     private String size;
     private String spuId;
+    private String status;
 }

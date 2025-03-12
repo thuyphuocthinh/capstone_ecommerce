@@ -19,23 +19,20 @@ public class CreateSkuRequest {
     @Size(min = 2, message = "SPU name min length is 2")
     private String name;
 
-    @NotBlank(message = "SPU size cannot be blank")
-    @Size(min = 2, message = "SPU size min length is 2")
+    @NotBlank(message = "SKU size cannot be blank")
+    @Size(min = 1, message = "SKU size min length is 1")
     private String size;
 
-    @NotBlank(message = "SPU color cannot be blank")
-    @Size(min = 2, message = "SPU color min length is 2")
+    @NotBlank(message = "SKU color cannot be blank")
+    @Size(min = 2, message = "SKU color min length is 2")
     private String color;
 
-    @NotBlank(message = "SKU price cannot be blank")
     @Min(value = 0, message = "SKU price must be greater than or equal to zero")
     private double price;
 
-    @NotBlank(message = "SKU discount cannot be blank")
     @Min(value = 0, message = "SKU discount must be greater than or equal to zero")
     private double discount;
 
-    @NotBlank(message = "SKU quantity cannot be blank")
     @Min(value = 0, message = "SKU quantity must be greater than or equal to zero")
     private int quantity;
 

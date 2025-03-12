@@ -90,7 +90,21 @@ public class SpuServiceImpl implements SpuService {
             throw new BadRequestException(SpuErrorConstant.SPU_STATUS_INACTIVE);
         }
 
-        SkuMinPriceDTO findSku = this.skuRepository.findBySpuIdWithMinPrice(id).orElseThrow(() -> new NotFoundException(SkuErrorConstant.SKU_NOT_FOUND));
+        return getSpuDetailResponse(findSpu);
+    }
+
+    private SpuDetailResponse getSpuDetailResponse(Spu findSpu) {
+        SkuMinPriceDTO findSku = this.skuRepository.findBySpuIdWithMinPrice(findSpu.getId()).orElseGet(() -> new SkuMinPriceDTO() {
+            @Override
+            public Double getDiscount() {
+                return 0.0;
+            }
+
+            @Override
+            public Double getPrice() {
+                return 0.0;
+            }
+        });
 
         return SpuDetailResponse.builder()
                 .id(findSpu.getId())
@@ -104,6 +118,7 @@ public class SpuServiceImpl implements SpuService {
                 .categoryName(findSpu.getCategory().getName())
                 .price(findSku.getPrice())
                 .discount(findSku.getDiscount())
+                .shopId(findSpu.getShop().getId())
                 .build();
     }
 
@@ -154,6 +169,7 @@ public class SpuServiceImpl implements SpuService {
                 .brandName(savedSpu.getBrand().getName())
                 .categoryId(savedSpu.getCategory().getId())
                 .categoryName(savedSpu.getCategory().getName())
+                .shopId(savedSpu.getShop().getId())
                 .build();
     }
 
@@ -166,20 +182,7 @@ public class SpuServiceImpl implements SpuService {
         List<SpuDetailResponse> spuDetailResponses;
 
         spuDetailResponses = spus.stream().map(spu -> {
-            SkuMinPriceDTO findSku = this.skuRepository.findBySpuIdWithMinPrice(spu.getId()).orElseThrow(() -> new NotFoundException(SkuErrorConstant.SKU_NOT_FOUND));
-            return SpuDetailResponse.builder()
-                    .id(spu.getId())
-                    .name(spu.getName())
-                    .description(spu.getDescription())
-                    .slug(spu.getSlug())
-                    .imageUrl(spu.getImageUrl())
-                    .brandId(spu.getBrand().getId())
-                    .brandName(spu.getBrand().getName())
-                    .categoryId(spu.getCategory().getId())
-                    .categoryName(spu.getCategory().getName())
-                    .price(findSku.getPrice())
-                    .discount(findSku.getDiscount())
-                    .build();
+            return getSpuDetailResponse(spu);
         }).toList();
 
         PaginationMetadata paginationMetadata = PaginationMetadata.builder()
@@ -215,6 +218,7 @@ public class SpuServiceImpl implements SpuService {
                     .brandName(spu.getBrand().getName())
                     .categoryId(spu.getCategory().getId())
                     .categoryName(spu.getCategory().getName())
+                    .shopId(spu.getShop().getId())
                     .build();
         }).toList();
 
@@ -270,6 +274,7 @@ public class SpuServiceImpl implements SpuService {
                 .brandName(findSpu.getBrand().getName())
                 .categoryId(findSpu.getCategory().getId())
                 .categoryName(findSpu.getCategory().getName())
+                .shopId(findSpu.getShop().getId())
                 .build();
     }
 }

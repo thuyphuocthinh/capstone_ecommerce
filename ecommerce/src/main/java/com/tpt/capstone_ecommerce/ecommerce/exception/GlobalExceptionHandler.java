@@ -32,6 +32,15 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<APIErrorResponse> handleRuntimeException(RuntimeException ex) {
+        APIErrorResponse response = APIErrorResponse.builder().message(ex.getMessage()).status("Error").build();
+        return new ResponseEntity<>(
+                response,
+                HttpStatus.NOT_FOUND
+        );
+    }
+
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<APIErrorResponse> handleNoMethodSupport(HttpRequestMethodNotSupportedException ex) {

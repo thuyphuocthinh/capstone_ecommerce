@@ -123,7 +123,7 @@ public class ProductController {
     @GetMapping("/spus/{id}/skus")
     public ResponseEntity<?> getListSkusBySpuHandler(@PathVariable String id) throws IOException {
         APISuccessResponse<Object> apiResponse = APISuccessResponse.builder()
-                .data(skuService.getListSkusBySpuId(id))
+                .data(skuService.getListSkusForClientBySpuId(id))
                 .message("Success")
                 .build();
         return new ResponseEntity<>(apiResponse, HttpStatus.OK);

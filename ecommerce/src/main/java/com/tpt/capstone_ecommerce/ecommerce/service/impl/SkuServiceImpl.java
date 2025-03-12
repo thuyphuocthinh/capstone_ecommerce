@@ -74,11 +74,13 @@ public class SkuServiceImpl implements SkuService {
                 .id(findSku.getId())
                 .color(findSku.getColor())
                 .size(findSku.getSize())
+                .name(findSku.getName())
                 .price(findSku.getPrice())
                 .quantity(findSku.getQuantity())
                 .imageUrl(findSku.getImageUrl())
                 .discount(findSku.getDiscount())
                 .spuId(findSku.getSpu().getId())
+                .status(findSku.getStatus().name())
                 .build();
     }
 
@@ -148,9 +150,13 @@ public class SkuServiceImpl implements SkuService {
     }
 
     @Override
-    public List<SkuDetailResponse> getListSkusBySpuId(String spuId) {
-        List<Sku> skus = this.skuRepository.findAllBySpuId(spuId);
+    public List<SkuDetailResponse> getListSkusForClientBySpuId(String spuId) {
+        List<Sku> skus = this.skuRepository.findAllActiveBySpuId(spuId, SKU_STATUS.ACTIVE.name());
 
+        return getSkuDetailResponses(skus);
+    }
+
+    private List<SkuDetailResponse> getSkuDetailResponses(List<Sku> skus) {
         List<SkuDetailResponse> skuDetailResponses;
         skuDetailResponses = skus.stream().map(sku -> {
             return SkuDetailResponse.builder()
@@ -162,10 +168,19 @@ public class SkuServiceImpl implements SkuService {
                     .imageUrl(sku.getImageUrl())
                     .discount(sku.getDiscount())
                     .spuId(sku.getSpu().getId())
+                    .name(sku.getName())
+                    .status(sku.getStatus().name())
                     .build();
         }).toList();
 
         return skuDetailResponses;
+    }
+
+    @Override
+    public List<SkuDetailResponse> getListSkusDashboardBySpuId(String spuId) {
+        List<Sku> skus = this.skuRepository.findAllBySpuId(spuId);
+
+        return getSkuDetailResponses(skus);
     }
 
     @Override
@@ -177,7 +192,19 @@ public class SkuServiceImpl implements SkuService {
         }
 
         findSku.setStatus(SKU_STATUS.valueOf(status));
-        this.skuRepository.save(findSku);
-        return null;
+        Sku savedSku = this.skuRepository.save(findSku);
+
+        return SkuDetailResponse.builder()
+                .id(savedSku.getId())
+                .color(savedSku.getColor())
+                .size(savedSku.getSize())
+                .price(savedSku.getPrice())
+                .quantity(savedSku.getQuantity())
+                .imageUrl(savedSku.getImageUrl())
+                .discount(savedSku.getDiscount())
+                .spuId(savedSku.getSpu().getId())
+                .name(savedSku.getName())
+                .status(savedSku.getStatus().name())
+                .build();
     }
 }

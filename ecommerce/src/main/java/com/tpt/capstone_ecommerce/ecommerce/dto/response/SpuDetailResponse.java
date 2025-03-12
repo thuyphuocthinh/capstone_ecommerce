@@ -19,6 +19,7 @@ public class SpuDetailResponse {
     private String brandName;
     private String categoryId;
     private String categoryName;
+    private String shopId;
     private double price;
     private double discount;
 }

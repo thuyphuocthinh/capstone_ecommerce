@@ -14,6 +14,7 @@ public interface SkuService {
     SkuDetailResponse getSkuDetail(String skuId) throws NotFoundException;
     SkuDetailResponse updateSku(String skuId, UpdateSkuRequest request) throws NotFoundException, IOException;
     String deleteSku(String skuId, boolean isHard) throws NotFoundException, BadRequestException;
-    List<SkuDetailResponse> getListSkusBySpuId(String spuId);
     SkuDetailResponse changeStatus(String skuId, String status) throws NotFoundException, BadRequestException;
+    List<SkuDetailResponse> getListSkusForClientBySpuId(String spuId);
+    List<SkuDetailResponse> getListSkusDashboardBySpuId(String spuId);
 }
