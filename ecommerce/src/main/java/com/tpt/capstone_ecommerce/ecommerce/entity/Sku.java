@@ -53,7 +53,7 @@ public class Sku {
 
     // spu id
     @ManyToOne
-    @JoinColumn(name = "spu_id")
+    @JoinColumn(nullable = false, name = "spu_id")
     private Spu spu;
 
     @Column(length = 50, name = "color")
