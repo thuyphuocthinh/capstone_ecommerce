@@ -4,10 +4,10 @@
 - Spring JPA
 - Spring security
 - Spring JWT
-- Spring mail
-- Redis
-- RabbitMQ
-- Elastic search
+- Spring Mail
+- Spring Oauth
+- Redis cache, Redis stream
+- Full text search
 ## Database
 - MySQL
 ## Features
