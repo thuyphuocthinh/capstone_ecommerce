@@ -63,12 +63,12 @@ public class Spu {
     private Shop shop;
 
     // category
-    @OneToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
     // brand
-    @OneToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "brand_id", nullable = false)
     private Brand brand;
 

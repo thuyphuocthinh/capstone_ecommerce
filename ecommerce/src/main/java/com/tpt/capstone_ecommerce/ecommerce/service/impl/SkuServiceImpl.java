@@ -5,6 +5,7 @@ import com.tpt.capstone_ecommerce.ecommerce.constant.SpuErrorConstant;
 import com.tpt.capstone_ecommerce.ecommerce.dto.request.CreateSkuRequest;
 import com.tpt.capstone_ecommerce.ecommerce.dto.request.UpdateSkuRequest;
 import com.tpt.capstone_ecommerce.ecommerce.dto.response.SkuDetailResponse;
+import com.tpt.capstone_ecommerce.ecommerce.dto.response.SpuDetailForClientResponse;
 import com.tpt.capstone_ecommerce.ecommerce.entity.Sku;
 import com.tpt.capstone_ecommerce.ecommerce.entity.Spu;
 import com.tpt.capstone_ecommerce.ecommerce.enums.SKU_STATUS;
@@ -150,10 +151,18 @@ public class SkuServiceImpl implements SkuService {
     }
 
     @Override
-    public List<SkuDetailResponse> getListSkusForClientBySpuId(String spuId) {
+    public SpuDetailForClientResponse getListSkusForClientBySpuId(String spuId) {
+        Spu findSpu = this.spuRepository.findById(spuId).orElseThrow(() -> new NotFoundException(SpuErrorConstant.SPU_NOT_FOUND));
+
         List<Sku> skus = this.skuRepository.findAllActiveBySpuId(spuId, SKU_STATUS.ACTIVE.name());
 
-        return getSkuDetailResponses(skus);
+        List<SkuDetailResponse> responses = getSkuDetailResponses(skus);
+
+        return SpuDetailForClientResponse.builder()
+                .id(findSpu.getId())
+                .name(findSpu.getName())
+                .skuDetailResponses(responses)
+                .build();
     }
 
     private List<SkuDetailResponse> getSkuDetailResponses(List<Sku> skus) {
