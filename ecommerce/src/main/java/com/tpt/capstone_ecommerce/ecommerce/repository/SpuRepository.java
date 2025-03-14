@@ -24,6 +24,12 @@ public interface SpuRepository extends JpaRepository<Spu, String> {
     @Query(value = "SELECT * FROM spus WHERE shop_id = ?1", nativeQuery = true)
     Page<Spu> findAllByShopId(String shopId, Pageable pageable);
 
+    @Query(value = "SELECT * FROM spus WHERE brand_id = ?1", nativeQuery = true)
+    Page<Spu> findAllByBrandId(String brandId, Pageable pageable);
+
+    @Query(value = "SELECT * FROM spus WHERE category_id = ?1", nativeQuery = true)
+    Page<Spu> findAllByCategoryId(String categoryId, Pageable pageable);
+
     @Query(value = """
         SELECT sp.id, sp.name, sp.description, sp.image_url, sp.slug,
                sp.brand_id, b.name AS brand_name, sp.category_id, c.name AS category_name,
