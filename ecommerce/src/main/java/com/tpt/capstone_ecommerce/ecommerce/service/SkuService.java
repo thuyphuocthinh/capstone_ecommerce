@@ -3,6 +3,7 @@ package com.tpt.capstone_ecommerce.ecommerce.service;
 import com.tpt.capstone_ecommerce.ecommerce.dto.request.CreateSkuRequest;
 import com.tpt.capstone_ecommerce.ecommerce.dto.request.UpdateSkuRequest;
 import com.tpt.capstone_ecommerce.ecommerce.dto.response.SkuDetailResponse;
+import com.tpt.capstone_ecommerce.ecommerce.dto.response.SpuDetailForClientResponse;
 import com.tpt.capstone_ecommerce.ecommerce.exception.NotFoundException;
 import org.apache.coyote.BadRequestException;
 
@@ -15,6 +16,6 @@ public interface SkuService {
     SkuDetailResponse updateSku(String skuId, UpdateSkuRequest request) throws NotFoundException, IOException;
     String deleteSku(String skuId, boolean isHard) throws NotFoundException, BadRequestException;
     SkuDetailResponse changeStatus(String skuId, String status) throws NotFoundException, BadRequestException;
-    List<SkuDetailResponse> getListSkusForClientBySpuId(String spuId);
+    SpuDetailForClientResponse getListSkusForClientBySpuId(String spuId);
     List<SkuDetailResponse> getListSkusDashboardBySpuId(String spuId);
 }

@@ -36,6 +36,6 @@ public class CreateSkuRequest {
     @Min(value = 0, message = "SKU quantity must be greater than or equal to zero")
     private int quantity;
 
-    @NotNull(message = "SPU image cannot be null")
+    @NotNull(message = "SKU image cannot be null")
     private MultipartFile file;
 }

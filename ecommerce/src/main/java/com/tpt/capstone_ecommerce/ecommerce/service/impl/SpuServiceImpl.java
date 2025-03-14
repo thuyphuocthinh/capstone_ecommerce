@@ -16,16 +16,12 @@ import com.tpt.capstone_ecommerce.ecommerce.service.UploadService;
 import com.tpt.capstone_ecommerce.ecommerce.utils.Slug;
 import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class SpuServiceImpl implements SpuService {
@@ -181,9 +177,7 @@ public class SpuServiceImpl implements SpuService {
 
         List<SpuDetailResponse> spuDetailResponses;
 
-        spuDetailResponses = spus.stream().map(spu -> {
-            return getSpuDetailResponse(spu);
-        }).toList();
+        spuDetailResponses = spus.stream().map(this::getSpuDetailResponse).toList();
 
         PaginationMetadata paginationMetadata = PaginationMetadata.builder()
                 .currentPage(page.getNumber() + 1)
@@ -203,37 +197,14 @@ public class SpuServiceImpl implements SpuService {
     public APISuccessResponseWithMetadata<?> getListsSpuDashboard(Integer pageNumber, Integer pageSize) {
         Pageable pageable = PageRequest.of(pageNumber, pageSize);
         Page<Spu> page = this.spuRepository.findAllByUndeletedStatus(pageable);
-        List<Spu> spus = page.getContent();
+        return getApiSuccessResponseWithMetadata(page);
+    }
 
-        List<SpuDetailResponse> spuDetailResponses;
-
-        spuDetailResponses = spus.stream().map(spu -> {
-            return SpuDetailResponse.builder()
-                    .id(spu.getId())
-                    .name(spu.getName())
-                    .description(spu.getDescription())
-                    .slug(spu.getSlug())
-                    .imageUrl(spu.getImageUrl())
-                    .brandId(spu.getBrand().getId())
-                    .brandName(spu.getBrand().getName())
-                    .categoryId(spu.getCategory().getId())
-                    .categoryName(spu.getCategory().getName())
-                    .shopId(spu.getShop().getId())
-                    .build();
-        }).toList();
-
-        PaginationMetadata paginationMetadata = PaginationMetadata.builder()
-                .currentPage(page.getNumber() + 1)
-                .pageSize(page.getSize())
-                .totalPages(page.getTotalPages())
-                .totalItems((int)page.getTotalElements())
-                .build();
-
-        return APISuccessResponseWithMetadata.builder()
-                .message("Success")
-                .data(spuDetailResponses)
-                .metadata(paginationMetadata)
-                .build();
+    @Override
+    public APISuccessResponseWithMetadata<?> getListsSpuByShop(String shopId, Integer pageNumber, Integer pageSize) {
+        Pageable pageable = PageRequest.of(pageNumber, pageSize);
+        Page<Spu> page = this.spuRepository.findAllByShopId(shopId, pageable);
+        return getApiSuccessResponseWithMetadata(page);
     }
 
     @Override
@@ -277,4 +248,97 @@ public class SpuServiceImpl implements SpuService {
                 .shopId(findSpu.getShop().getId())
                 .build();
     }
+
+    @Override
+    public APISuccessResponseWithMetadata<?> searchSpuByName(
+            String name, String brandIds, String categoryIds, String sortBy, String sortDirection,
+            Integer pageNumber, Integer pageSize) throws BadRequestException {
+
+        // Trim name để tránh lỗi khoảng trắng
+        name = name.trim();
+
+        // Convert string brandIds/categoryIds thành List<String>
+        List<String> brandIdList = brandIds == null ? null :
+                Arrays.asList(brandIds.split(","));
+
+        List<String> categoryIdList;
+        categoryIdList = categoryIds == null ? null :
+                Arrays.asList(categoryIds.split(","));
+
+        // Sort direction mặc định ASC nếu không có
+        if(sortDirection == null) {
+            sortDirection = AppConstant.SORT_DIRECTION_ASC;
+        } else {
+            if(!AppConstant.SORT_DIRECTION_ASC.equalsIgnoreCase(sortDirection) && !AppConstant.SORT_DIRECTION_DESC.equalsIgnoreCase(sortDirection)) {
+                throw new BadRequestException(AppErrorConstant.INVALID_SORT_DIRECTION);
+            }
+        }
+
+        if(sortBy == null) {
+            sortBy = AppConstant.SORT_BY;
+        } else {
+            if(!sortBy.equals(AppConstant.SORT_BY)) {
+                throw new BadRequestException(AppErrorConstant.INVALID_SORT_BY);
+            }
+        }
+
+        Pageable pageable = PageRequest.of(pageNumber, pageSize);
+
+        Page<SpuDetailResponse> page;
+        if(sortDirection.equalsIgnoreCase(AppConstant.SORT_DIRECTION_ASC)) {
+            page = this.spuRepository.findByBrandAndCategorySortedAsc(name, brandIdList, categoryIdList, pageable);
+        } else {
+            page = this.spuRepository.findByBrandAndCategorySortedDesc(name, brandIdList, categoryIdList, pageable);
+        }
+
+        List<SpuDetailResponse> spuDetailResponses = page.getContent();
+
+        PaginationMetadata paginationMetadata = PaginationMetadata.builder()
+                .currentPage(page.getNumber() + 1)
+                .pageSize(page.getSize())
+                .totalPages(page.getTotalPages())
+                .totalItems((int)page.getTotalElements())
+                .build();
+
+        return APISuccessResponseWithMetadata.builder()
+                .message("Success")
+                .data(spuDetailResponses)
+                .metadata(paginationMetadata)
+                .build();
+    }
+
+    private APISuccessResponseWithMetadata<?> getApiSuccessResponseWithMetadata(Page<Spu> page) {
+        List<Spu> spus = page.getContent();
+
+        List<SpuDetailResponse> spuDetailResponses;
+
+        spuDetailResponses = spus.stream().map(spu -> {
+            return SpuDetailResponse.builder()
+                    .id(spu.getId())
+                    .name(spu.getName())
+                    .description(spu.getDescription())
+                    .slug(spu.getSlug())
+                    .imageUrl(spu.getImageUrl())
+                    .brandId(spu.getBrand().getId())
+                    .brandName(spu.getBrand().getName())
+                    .categoryId(spu.getCategory().getId())
+                    .categoryName(spu.getCategory().getName())
+                    .shopId(spu.getShop().getId())
+                    .build();
+        }).toList();
+
+        PaginationMetadata paginationMetadata = PaginationMetadata.builder()
+                .currentPage(page.getNumber() + 1)
+                .pageSize(page.getSize())
+                .totalPages(page.getTotalPages())
+                .totalItems((int)page.getTotalElements())
+                .build();
+
+        return APISuccessResponseWithMetadata.builder()
+                .message("Success")
+                .data(spuDetailResponses)
+                .metadata(paginationMetadata)
+                .build();
+    }
+
 }

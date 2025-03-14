@@ -67,6 +67,28 @@ public class ProductController {
         return new ResponseEntity<>(this.spuService.getListsSpuDashboard(pageNumber, pageSize), HttpStatus.OK);
     }
 
+    @GetMapping("/spus/shops/{id}")
+    public ResponseEntity<?> getSpuByShopHandler(
+            @PathVariable String id,
+            @RequestParam(name = "pageNumber", required = false, defaultValue = AppConstant.PAGE_NUMBER) Integer pageNumber,
+            @RequestParam(name = "pageSize", required = false, defaultValue = AppConstant.PAGE_SIZE) Integer pageSize
+    ) {
+        return new ResponseEntity<>(this.spuService.getListsSpuByShop(id, pageNumber, pageSize), HttpStatus.OK);
+    }
+
+    @GetMapping("/spus")
+    public ResponseEntity<?> searchSpusHandler(
+            @RequestParam(name = "pageNumber", required = false, defaultValue = AppConstant.PAGE_NUMBER) Integer pageNumber,
+            @RequestParam(name = "pageSize", required = false, defaultValue = AppConstant.PAGE_SIZE) Integer pageSize,
+            @RequestParam(name = "sortBy", required = false, defaultValue = AppConstant.SORT_BY) String sortBy,
+            @RequestParam(name = "sortDirection", required = false, defaultValue = AppConstant.SORT_DIRECTION_ASC) String sortDirection,
+            @RequestParam(name = "brandIds", required = false) String brandIds,
+            @RequestParam(name = "categoryIds", required = false) String categoryIds,
+            @RequestParam(name = "keyword", required = true) String name
+    ) throws BadRequestException {
+        return new ResponseEntity<>(this.spuService.searchSpuByName(name, brandIds, categoryIds, sortBy, sortDirection,  pageNumber, pageSize), HttpStatus.OK);
+    }
+
     @PatchMapping("/spus/{id}")
     public ResponseEntity<?> updateSpuHandler(@PathVariable String id, @ModelAttribute UpdateSpuRequest request) throws IOException {
         APISuccessResponse<Object> apiResponse = APISuccessResponse.builder()
