@@ -37,17 +37,23 @@ public class GlobalExceptionHandler {
         APIErrorResponse response = APIErrorResponse.builder().message(ex.getMessage()).status("Error").build();
         return new ResponseEntity<>(
                 response,
-                HttpStatus.NOT_FOUND
+                HttpStatus.BAD_REQUEST
         );
     }
 
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, String>> handleGenericException(Exception ex) {
+        Map<String, String> response = new HashMap<>();
+        response.put("error", "Internal Server Error: " + ex.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+    }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<APIErrorResponse> handleNoMethodSupport(HttpRequestMethodNotSupportedException ex) {
         APIErrorResponse response = APIErrorResponse.builder().message(ex.getMessage()).status("Error").build();
         return new ResponseEntity<>(
                 response,
-                HttpStatus.NOT_FOUND
+                HttpStatus.HTTP_VERSION_NOT_SUPPORTED
         );
     }
 
