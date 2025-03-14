@@ -33,6 +33,10 @@ public class Order {
     @Min(value = 0, message = "Order total price must be greater than or equal to zero")
     private double totalPrice = 0.0;
 
+    @Column(nullable = false, name = "final_total_price")
+    @Min(value = 0, message = "Order final total price must be greater than or equal to zero")
+    private double finalTotalPrice = 0.0;
+
     @Column(nullable = false, name = "total_quantity")
     @Min(value = 0, message = "Order total quantity must be greater than or equal to zero")
     private int totalQuantity = 0;

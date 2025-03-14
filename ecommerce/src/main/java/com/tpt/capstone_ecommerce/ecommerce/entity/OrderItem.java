@@ -40,6 +40,10 @@ public class OrderItem {
     @Min(value = 0, message = "Order item price must be greater than or equal to zero")
     private double price = 0.0;
 
+    @Column(nullable = false, name = "discount")
+    @Min(value = 0, message = "Order item discount must be greater than or equal to zero")
+    private double discount = 0.0;
+
     @Column(nullable = false, name = "created_at", updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     @CreationTimestamp
     private LocalDateTime createdAt;
