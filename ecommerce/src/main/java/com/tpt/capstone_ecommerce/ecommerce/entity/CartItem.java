@@ -34,11 +34,15 @@ public class CartItem {
 
     @Column(nullable = false, name = "quantity")
     @Min(value = 0, message = "Cart item quantity must be greater than or equal to zero")
-    private int quantity;
+    private int quantity = 0;
 
-    @Column(nullable = false, name = "price")
-    @Min(value = 0, message = "Cart item price must be greater than or equal to zero")
-    private double price;
+    @Column(nullable = false, name = "unit_price")
+    @Min(value = 0, message = "Cart item unit price must be greater than or equal to zero")
+    private double unitPrice = 0.0;
+
+    @Column(nullable = false, name = "discount")
+    @Min(value = 0, message = "Cart item discount must be greater than or equal to zero")
+    private double discount = 0.0;
 
     @Column(nullable = false, name = "created_at", updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     @CreationTimestamp
@@ -47,4 +51,8 @@ public class CartItem {
     @Column(nullable = true, name = "updated_at")
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    public double getTotalPrice() {
+        return this.unitPrice * this.quantity;
+    }
 }
