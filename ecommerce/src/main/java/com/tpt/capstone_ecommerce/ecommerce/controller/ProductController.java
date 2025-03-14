@@ -76,6 +76,24 @@ public class ProductController {
         return new ResponseEntity<>(this.spuService.getListsSpuByShop(id, pageNumber, pageSize), HttpStatus.OK);
     }
 
+    @GetMapping("/spus/brands/{id}")
+    public ResponseEntity<?> getSpuByBrandHandler(
+            @PathVariable String id,
+            @RequestParam(name = "pageNumber", required = false, defaultValue = AppConstant.PAGE_NUMBER) Integer pageNumber,
+            @RequestParam(name = "pageSize", required = false, defaultValue = AppConstant.PAGE_SIZE) Integer pageSize
+    ) {
+        return new ResponseEntity<>(this.spuService.getListsSpuByBrand(id, pageNumber, pageSize), HttpStatus.OK);
+    }
+
+    @GetMapping("/spus/categories/{id}")
+    public ResponseEntity<?> getSpuByCategoryHandler(
+            @PathVariable String id,
+            @RequestParam(name = "pageNumber", required = false, defaultValue = AppConstant.PAGE_NUMBER) Integer pageNumber,
+            @RequestParam(name = "pageSize", required = false, defaultValue = AppConstant.PAGE_SIZE) Integer pageSize
+    ) {
+        return new ResponseEntity<>(this.spuService.getListsSpuByCategory(id, pageNumber, pageSize), HttpStatus.OK);
+    }
+
     @GetMapping("/spus")
     public ResponseEntity<?> searchSpusHandler(
             @RequestParam(name = "pageNumber", required = false, defaultValue = AppConstant.PAGE_NUMBER) Integer pageNumber,

@@ -173,6 +173,33 @@ public class SpuServiceImpl implements SpuService {
     public APISuccessResponseWithMetadata<?> getListsSpuHomepage(Integer pageNumber, Integer pageSize) {
         Pageable pageable = PageRequest.of(pageNumber, pageSize);
         Page<Spu> page = this.spuRepository.findAllByActiveStatus(pageable);
+        return mapSpuWithPrice(page);
+    }
+
+    @Override
+    public APISuccessResponseWithMetadata<?> getListsSpuDashboard(Integer pageNumber, Integer pageSize) {
+        Pageable pageable = PageRequest.of(pageNumber, pageSize);
+        Page<Spu> page = this.spuRepository.findAllByUndeletedStatus(pageable);
+        return mapSpuWithoutPrice(page);
+    }
+
+    @Override
+    public APISuccessResponseWithMetadata<?> getListsSpuByShop(String shopId, Integer pageNumber, Integer pageSize) {
+        Pageable pageable = PageRequest.of(pageNumber, pageSize);
+        Page<Spu> page = this.spuRepository.findAllByShopId(shopId, pageable);
+        return mapSpuWithoutPrice(page);
+    }
+
+    @Override
+    public APISuccessResponseWithMetadata<?> getListsSpuByBrand(String brandId, Integer pageNumber, Integer pageSize) throws NotFoundException {
+        Brand findBrand = this.brandRepository.findById(brandId).orElseThrow(() -> new NotFoundException(BrandErrorConstant.BRAND_NOT_FOUND));
+
+        Pageable pageable = PageRequest.of(pageNumber, pageSize);
+        Page<Spu> page = this.spuRepository.findAllByBrandId(brandId, pageable);
+        return mapSpuWithPrice(page);
+    }
+
+    private APISuccessResponseWithMetadata<?> mapSpuWithPrice(Page<Spu> page) {
         List<Spu> spus = page.getContent();
 
         List<SpuDetailResponse> spuDetailResponses;
@@ -194,17 +221,13 @@ public class SpuServiceImpl implements SpuService {
     }
 
     @Override
-    public APISuccessResponseWithMetadata<?> getListsSpuDashboard(Integer pageNumber, Integer pageSize) {
-        Pageable pageable = PageRequest.of(pageNumber, pageSize);
-        Page<Spu> page = this.spuRepository.findAllByUndeletedStatus(pageable);
-        return getApiSuccessResponseWithMetadata(page);
-    }
+    public APISuccessResponseWithMetadata<?> getListsSpuByCategory(String categoryId, Integer pageNumber, Integer pageSize) throws NotFoundException {
+        Category findCategory = this.categoryRepository.findById(categoryId).orElseThrow(() -> new NotFoundException(CategoryErrorConstant.CATEGORY_NOT_FOUND));
 
-    @Override
-    public APISuccessResponseWithMetadata<?> getListsSpuByShop(String shopId, Integer pageNumber, Integer pageSize) {
         Pageable pageable = PageRequest.of(pageNumber, pageSize);
-        Page<Spu> page = this.spuRepository.findAllByShopId(shopId, pageable);
-        return getApiSuccessResponseWithMetadata(page);
+        Page<Spu> page = this.spuRepository.findAllByCategoryId(categoryId, pageable);
+
+        return mapSpuWithPrice(page);
     }
 
     @Override
@@ -307,7 +330,7 @@ public class SpuServiceImpl implements SpuService {
                 .build();
     }
 
-    private APISuccessResponseWithMetadata<?> getApiSuccessResponseWithMetadata(Page<Spu> page) {
+    private APISuccessResponseWithMetadata<?> mapSpuWithoutPrice(Page<Spu> page) {
         List<Spu> spus = page.getContent();
 
         List<SpuDetailResponse> spuDetailResponses;
