@@ -16,4 +16,6 @@ public interface DiscountService {
     APISuccessResponseWithMetadata<?> getDiscountsByCreator(String creatorId, Integer pageNumber, Integer pageSize) throws NotFoundException, BadRequestException;
     APISuccessResponseWithMetadata<?> getAllDiscounts(Integer pageNumber, Integer pageSize) throws NotFoundException, BadRequestException;
     String changeDiscountStatus(String discountId, String status) throws NotFoundException, BadRequestException;
+    APISuccessResponseWithMetadata<?> getDiscountsByAmountAndShop(String shopId, Double amount, Integer pageNumber, Integer pageSize) throws NotFoundException, BadRequestException;
+    APISuccessResponseWithMetadata<?> getGlobalDiscountsByAmount(Double amount, Integer pageNumber, Integer pageSize) throws NotFoundException, BadRequestException;
 }
