@@ -9,13 +9,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class CartItemDetailResponse {
-    private String id;
-    private String skuId;
-    private String shopId;
-    private String skuName;
-    private String skuImageUrl;
+public class OrderItemResponse {
+    private String orderItemId;
     private int quantity;
-    private double unitPrice;
-    private double discount;
+    private double price;
+    private String status;
 }
