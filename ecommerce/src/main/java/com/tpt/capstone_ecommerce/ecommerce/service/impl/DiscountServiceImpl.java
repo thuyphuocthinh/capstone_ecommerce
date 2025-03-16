@@ -68,6 +68,7 @@ public class DiscountServiceImpl implements DiscountService {
                 .creator(findCreator)
                 .description(description)
                 .startDate(startDate)
+                .isGlobal(findCreator.getRoles().stream().map(role -> role.getRole().name()).toList().contains(USER_ROLE.ADMIN.name()))
                 .endDate(endDate)
                 .value(value)
                 .minOrderValue(minOrderValue)
@@ -216,6 +217,21 @@ public class DiscountServiceImpl implements DiscountService {
         this.discountRepository.save(findDiscount);
 
         return "Success";
+    }
+
+    @Override
+    public APISuccessResponseWithMetadata<?> getDiscountsByAmountAndShop(String shopId, Double amount, Integer pageNumber, Integer pageSize) throws NotFoundException, BadRequestException {
+        Pageable pageRequest = PageRequest.of(pageNumber, pageSize);
+
+        Page<Discount> page = this.discountRepository.findAllByShopIdAndValue(shopId, amount, pageRequest);
+        return getApiSuccessResponseWithMetadata(page);
+    }
+
+    @Override
+    public APISuccessResponseWithMetadata<?> getGlobalDiscountsByAmount(Double amount, Integer pageNumber, Integer pageSize) throws NotFoundException, BadRequestException {
+        Pageable pageRequest = PageRequest.of(pageNumber, pageSize);
+        Page<Discount> page = this.discountRepository.findAllGlobalDiscountsWithAmount(amount, pageRequest);
+        return getApiSuccessResponseWithMetadata(page);
     }
 
     private APISuccessResponseWithMetadata<?> getApiSuccessResponseWithMetadata(Page<Discount> page) {
