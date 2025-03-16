@@ -229,7 +229,7 @@ public class DiscountServiceImpl implements DiscountService {
 
     @Override
     public APISuccessResponseWithMetadata<?> getGlobalDiscountsByAmount(Double amount, Integer pageNumber, Integer pageSize) throws NotFoundException, BadRequestException {
-        Pageable pageRequest = PageRequest.of(pageNumber, pageSize);
+        Pageable pageRequest = PageRequest.of(Math.max(0, pageNumber - 1), pageSize);
         Page<Discount> page = this.discountRepository.findAllGlobalDiscountsWithAmount(amount, pageRequest);
         return getApiSuccessResponseWithMetadata(page);
     }
