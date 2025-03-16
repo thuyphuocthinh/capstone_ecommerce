@@ -171,21 +171,21 @@ public class SpuServiceImpl implements SpuService {
 
     @Override
     public APISuccessResponseWithMetadata<?> getListsSpuHomepage(Integer pageNumber, Integer pageSize) {
-        Pageable pageable = PageRequest.of(pageNumber, pageSize);
+        Pageable pageable = PageRequest.of(Math.max(0, pageNumber - 1), pageSize);
         Page<Spu> page = this.spuRepository.findAllByActiveStatus(pageable);
         return mapSpuWithPrice(page);
     }
 
     @Override
     public APISuccessResponseWithMetadata<?> getListsSpuDashboard(Integer pageNumber, Integer pageSize) {
-        Pageable pageable = PageRequest.of(pageNumber, pageSize);
+        Pageable pageable = PageRequest.of(Math.max(0, pageNumber - 1), pageSize);
         Page<Spu> page = this.spuRepository.findAllByUndeletedStatus(pageable);
         return mapSpuWithoutPrice(page);
     }
 
     @Override
     public APISuccessResponseWithMetadata<?> getListsSpuByShop(String shopId, Integer pageNumber, Integer pageSize) {
-        Pageable pageable = PageRequest.of(pageNumber, pageSize);
+        Pageable pageable = PageRequest.of(Math.max(0, pageNumber - 1), pageSize);
         Page<Spu> page = this.spuRepository.findAllByShopId(shopId, pageable);
         return mapSpuWithoutPrice(page);
     }
@@ -194,7 +194,7 @@ public class SpuServiceImpl implements SpuService {
     public APISuccessResponseWithMetadata<?> getListsSpuByBrand(String brandId, Integer pageNumber, Integer pageSize) throws NotFoundException {
         Brand findBrand = this.brandRepository.findById(brandId).orElseThrow(() -> new NotFoundException(BrandErrorConstant.BRAND_NOT_FOUND));
 
-        Pageable pageable = PageRequest.of(pageNumber, pageSize);
+        Pageable pageable = PageRequest.of(Math.max(0, pageNumber - 1), pageSize);
         Page<Spu> page = this.spuRepository.findAllByBrandId(brandId, pageable);
         return mapSpuWithPrice(page);
     }
@@ -305,7 +305,7 @@ public class SpuServiceImpl implements SpuService {
             }
         }
 
-        Pageable pageable = PageRequest.of(pageNumber, pageSize);
+        Pageable pageable = PageRequest.of(Math.max(0, pageNumber - 1), pageSize);
 
         Page<SpuDetailResponse> page;
         if(sortDirection.equalsIgnoreCase(AppConstant.SORT_DIRECTION_ASC)) {
