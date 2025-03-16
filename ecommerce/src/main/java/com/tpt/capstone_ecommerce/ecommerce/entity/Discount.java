@@ -39,6 +39,10 @@ public class Discount {
     @Size(min = 1, max = 50, message = "Discount code length is invalid")
     private String code;
 
+    @Column(nullable = false, unique = true, length = 1, name = "is_global")
+    @NotNull(message = "Discount global or shop cannot be null")
+    private Boolean isGlobal;
+
     @Lob
     @Column(nullable = false, columnDefinition = "TEXT", name = "description")
     private String description;
