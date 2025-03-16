@@ -115,7 +115,7 @@ public class UserProfileImpl implements UserService {
 
     @Override
     public APISuccessResponseWithMetadata<?> getOrdersByUser(String userId, Integer pageNumber, Integer pageSize) throws NotFoundException {
-        User user = this.userRepository.findById(userId).orElseThrow(() -> new NotFoundException("User not found"));
+        User user = this.userRepository.findById(userId).orElseThrow(() -> new NotFoundException(UserErrorConstant.USER_NOT_FOUND));
 
         Pageable page = PageRequest.of(Math.max(0, pageNumber - 1), pageSize);
         Page<Order> orderPage = this.orderRepository.findAllByUser(user, page);
