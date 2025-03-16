@@ -25,6 +25,7 @@ import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -190,7 +191,7 @@ public class ShopServiceImpl implements ShopService {
 
     @Override
     public APISuccessResponseWithMetadata<?> getListShops(Integer pageNumber, Integer pageSize) {
-        PageRequest pageRequest = PageRequest.of(pageNumber, pageSize);
+        Pageable pageRequest = PageRequest.of(Math.max(0, pageNumber - 1), pageSize);
 
         Page<Shop> shopPage = this.shopRepository.findAll(pageRequest);
         List<Shop> shops = shopPage.getContent();
