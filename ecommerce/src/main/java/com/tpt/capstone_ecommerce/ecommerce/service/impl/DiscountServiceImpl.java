@@ -221,7 +221,7 @@ public class DiscountServiceImpl implements DiscountService {
 
     @Override
     public APISuccessResponseWithMetadata<?> getDiscountsByAmountAndShop(String shopId, Double amount, Integer pageNumber, Integer pageSize) throws NotFoundException, BadRequestException {
-        Pageable pageRequest = PageRequest.of(Math.max(0, pageNumber - 1), pageSize);c
+        Pageable pageRequest = PageRequest.of(Math.max(0, pageNumber - 1), pageSize);
 
         Page<Discount> page = this.discountRepository.findAllByShopIdAndValue(shopId, amount, pageRequest);
         return getApiSuccessResponseWithMetadata(page);
