@@ -6,6 +6,7 @@ import com.tpt.capstone_ecommerce.ecommerce.enums.USER_STATUS;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -44,19 +45,19 @@ public class Order {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 15, name = "status")
-    @NotBlank(message = "Order status cannot be blank")
+    @NotNull(message = "Order status cannot be blank")
     private ORDER_STATUS status = ORDER_STATUS.PENDING;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 15, name = "status")
-    @NotBlank(message = "Payment method cannot be blank")
+    @Column(nullable = false, length = 15, name = "payment_method")
+    @NotNull(message = "Payment method cannot be blank")
     private PAYMENT_METHOD paymentMethod;
 
     @ManyToOne
     @JoinColumn(nullable = false, name = "user_id")
     private User user;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(nullable = false, name = "address_id")
     private Address address;
 

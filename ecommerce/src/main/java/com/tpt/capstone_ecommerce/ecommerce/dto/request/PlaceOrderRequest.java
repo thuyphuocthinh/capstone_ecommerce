@@ -23,7 +23,7 @@ public class PlaceOrderRequest {
     @Size(min = 36, max = 36, message = "Place order address id length is 36")
     private String addressId;
 
-    @ValidEnum(enumClass = PAYMENT_METHOD.class, message = "Invalid order status")
+    @NotBlank(message = "Payment method is required")
     private String paymentMethod;
 
     @NotEmpty(message = "Place order item ids cannot be empty")

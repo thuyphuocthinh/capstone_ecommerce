@@ -4,5 +4,5 @@ public class OrderErrorConstant {
     public static final String ORDER_NOT_FOUND = "Order not found";
     public static final String ORDER_ITEM_NOT_FOUND = "Order item not found";
     public static final String CANNOT_CANCEL_ORDER = "Can't cancel order";
-
+    public static final String ORDER_ITEM_STATUS_EXISTS = "Order item status exists";
 }

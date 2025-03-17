@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class OrderItemResponse {
     private String orderItemId;
+    private String skuId;
     private int quantity;
     private double price;
     private String status;

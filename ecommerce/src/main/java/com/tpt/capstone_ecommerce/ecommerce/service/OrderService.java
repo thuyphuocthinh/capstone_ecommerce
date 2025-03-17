@@ -8,11 +8,12 @@ import org.apache.coyote.BadRequestException;
 
 public interface OrderService {
     CheckoutOrderResponse checkoutOrder(CheckoutOrderRequest checkoutOrderRequest);
-    PlaceOrderResponse placeOrder(String userEmail, PlaceOrderRequest placeOrderRequest) throws BadRequestException;
+    PlaceOrderResponse placeOrder(String email, PlaceOrderRequest placeOrderRequest) throws BadRequestException;
     OrderDetailResponse getOrderDetail(String orderId) throws NotFoundException;
     String cancelOrder(String orderId) throws NotFoundException, BadRequestException;
     OrderItemResponse getOrderItemDetailByShop (String orderItemId) throws NotFoundException;
     APISuccessResponseWithMetadata<?> getListOrderByShop(String shopId, Integer pageNumber, Integer pageSize) throws NotFoundException;
     APISuccessResponseWithMetadata<?> getListOrderByAdmin(Integer pageNumber, Integer pageSize) throws NotFoundException;
-    String updateOrderStatusByShop(String orderItemId, String statusChange) throws NotFoundException;
+    String updateOrderItemStatusByShop(String orderItemId, String statusChange) throws NotFoundException, BadRequestException;
+    String updateOrderStatus(String orderId) throws NotFoundException;
 }

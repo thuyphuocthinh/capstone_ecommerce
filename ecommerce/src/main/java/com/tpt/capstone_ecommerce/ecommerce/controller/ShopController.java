@@ -1,5 +1,6 @@
 package com.tpt.capstone_ecommerce.ecommerce.controller;
 
+import com.tpt.capstone_ecommerce.ecommerce.aop.annotation.ValidEnum;
 import com.tpt.capstone_ecommerce.ecommerce.constant.AppConstant;
 import com.tpt.capstone_ecommerce.ecommerce.dto.request.CreateDiscountRequest;
 import com.tpt.capstone_ecommerce.ecommerce.dto.request.CreateShopRequest;
@@ -8,8 +9,10 @@ import com.tpt.capstone_ecommerce.ecommerce.dto.request.UpdateShopRequest;
 import com.tpt.capstone_ecommerce.ecommerce.dto.response.APISuccessResponse;
 import com.tpt.capstone_ecommerce.ecommerce.entity.Shop;
 import com.tpt.capstone_ecommerce.ecommerce.enums.DISCOUNT_STATUS;
+import com.tpt.capstone_ecommerce.ecommerce.enums.ORDER_ITEM_STATUS;
 import com.tpt.capstone_ecommerce.ecommerce.exception.NotFoundException;
 import com.tpt.capstone_ecommerce.ecommerce.service.DiscountService;
+import com.tpt.capstone_ecommerce.ecommerce.service.OrderService;
 import com.tpt.capstone_ecommerce.ecommerce.service.ShopService;
 import jakarta.validation.Valid;
 import org.apache.coyote.BadRequestException;
@@ -29,9 +32,12 @@ public class ShopController {
 
     private final DiscountService discountService;
 
-    public ShopController(ShopService shopService, DiscountService discountService) {
+    private final OrderService orderService;
+
+    public ShopController(ShopService shopService, DiscountService discountService, OrderService orderService) {
         this.shopService = shopService;
         this.discountService = discountService;
+        this.orderService = orderService;
     }
 
     @PostMapping
@@ -151,5 +157,50 @@ public class ShopController {
                 .data(this.discountService.changeDiscountStatus(id, status.name()))
                 .build();
         return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @GetMapping("/{id}/orders")
+    public ResponseEntity<?> getOrdersByShops(
+            @PathVariable String id,
+            @RequestParam(name = "pageNumber", required = false, defaultValue = AppConstant.PAGE_NUMBER) Integer pageNumber,
+            @RequestParam(name = "pageSize", required = false, defaultValue = AppConstant.PAGE_SIZE) Integer pageSize
+    ) throws BadRequestException {
+        return new ResponseEntity<>(
+                this.orderService.getListOrderByShop(id, pageNumber, pageSize),
+                HttpStatus.OK
+        );
+    }
+
+    @GetMapping("/orders/{id}")
+    public ResponseEntity<?> getOrderDetailByShops(
+            @PathVariable String id
+    ) throws BadRequestException {
+        APISuccessResponse<?> apiSuccessResponse = APISuccessResponse
+                .builder()
+                .message("Success")
+                .data(this.orderService.getOrderItemDetailByShop(id))
+                .build();
+
+        return new ResponseEntity<>(
+                apiSuccessResponse,
+                HttpStatus.OK
+        );
+    }
+
+    @PatchMapping("/orders/{id}/change-status/{status}")
+    public ResponseEntity<?> getOrderDetailByShops(
+            @PathVariable String id,
+            @PathVariable @ValidEnum(enumClass = ORDER_ITEM_STATUS.class) String status
+    ) throws BadRequestException {
+        APISuccessResponse<?> apiSuccessResponse = APISuccessResponse
+                .builder()
+                .message("Success")
+                .data(this.orderService.updateOrderItemStatusByShop(id, status))
+                .build();
+
+        return new ResponseEntity<>(
+                apiSuccessResponse,
+                HttpStatus.OK
+        );
     }
 }
