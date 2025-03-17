@@ -26,6 +26,8 @@ public class PlaceOrderRequest {
     @NotBlank(message = "Payment method is required")
     private String paymentMethod;
 
+    private String paymentThirdParty;
+
     @NotEmpty(message = "Place order item ids cannot be empty")
     List<String> orderItemIds;
 

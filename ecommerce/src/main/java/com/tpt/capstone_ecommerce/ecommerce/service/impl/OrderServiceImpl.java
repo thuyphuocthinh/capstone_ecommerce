@@ -3,17 +3,17 @@ package com.tpt.capstone_ecommerce.ecommerce.service.impl;
 import com.tpt.capstone_ecommerce.ecommerce.constant.*;
 import com.tpt.capstone_ecommerce.ecommerce.dto.request.CheckoutOrderRequest;
 import com.tpt.capstone_ecommerce.ecommerce.dto.request.OrderDiscount;
+import com.tpt.capstone_ecommerce.ecommerce.dto.request.PaymentRequest;
 import com.tpt.capstone_ecommerce.ecommerce.dto.request.PlaceOrderRequest;
 import com.tpt.capstone_ecommerce.ecommerce.dto.response.*;
 import com.tpt.capstone_ecommerce.ecommerce.entity.*;
-import com.tpt.capstone_ecommerce.ecommerce.enums.DISCOUNT_TYPE;
-import com.tpt.capstone_ecommerce.ecommerce.enums.ORDER_ITEM_STATUS;
-import com.tpt.capstone_ecommerce.ecommerce.enums.ORDER_STATUS;
-import com.tpt.capstone_ecommerce.ecommerce.enums.PAYMENT_METHOD;
+import com.tpt.capstone_ecommerce.ecommerce.enums.*;
 import com.tpt.capstone_ecommerce.ecommerce.exception.NotFoundException;
 import com.tpt.capstone_ecommerce.ecommerce.repository.*;
 import com.tpt.capstone_ecommerce.ecommerce.service.CartService;
 import com.tpt.capstone_ecommerce.ecommerce.service.OrderService;
+import com.tpt.capstone_ecommerce.ecommerce.service.PaymentService;
+import com.tpt.capstone_ecommerce.ecommerce.service.factory.PaymentServiceFactory;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.BadRequestException;
@@ -21,9 +21,11 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.TransactionSystemException;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -48,7 +50,9 @@ public class OrderServiceImpl implements OrderService {
 
     private final CartService cartService;
 
-    public OrderServiceImpl(CartItemRepository cartItemRepository, OrderRepository orderRepository, OrderItemRepository orderItemRepository, SkuRepository skuRepository, AddressRepository addressRepository, DiscountRepository discountRepository, UserRepository userRepository, CartService cartService) {
+    private final PaymentService paymentService;
+
+    public OrderServiceImpl(CartItemRepository cartItemRepository, OrderRepository orderRepository, OrderItemRepository orderItemRepository, SkuRepository skuRepository, AddressRepository addressRepository, DiscountRepository discountRepository, UserRepository userRepository, CartService cartService, PaymentService paymentService) {
         this.cartItemRepository = cartItemRepository;
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
@@ -57,6 +61,7 @@ public class OrderServiceImpl implements OrderService {
         this.discountRepository = discountRepository;
         this.userRepository = userRepository;
         this.cartService = cartService;
+        this.paymentService = paymentService;
     }
 
     @Override
@@ -112,12 +117,13 @@ public class OrderServiceImpl implements OrderService {
 
     @Transactional
     @Override
-    public PlaceOrderResponse placeOrder(String email, PlaceOrderRequest placeOrderRequest) throws BadRequestException {
+    public PlaceOrderResponse placeOrder(String email, PlaceOrderRequest placeOrderRequest, String ipAddress) throws Exception {
         String addressId = placeOrderRequest.getAddressId();
         List<String> orderItemIds = placeOrderRequest.getOrderItemIds();
         List<OrderDiscount> shopDiscounts = placeOrderRequest.getShopDiscounts();
         OrderDiscount globalDiscounts = placeOrderRequest.getGlobalDiscounts();
         String paymentMethod = placeOrderRequest.getPaymentMethod();
+        String paymentThirdParty = placeOrderRequest.getPaymentThirdParty();
 
         // Validate user
         User findUser = userRepository.findByEmail(email)
@@ -210,6 +216,14 @@ public class OrderServiceImpl implements OrderService {
             throw new BadRequestException(PaymenErrorConstant.INVALID_PAYMENT_METHOD);
         }
 
+        PAYMENT_THIRD_PARTIES paymentThirdPartyEnum;
+        try {
+            paymentThirdPartyEnum = PAYMENT_THIRD_PARTIES.valueOf(paymentThirdParty);
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestException(PaymenErrorConstant.INVALID_PAYMENT_THIRD_PARTY);
+        }
+
+
         // Save order
         // **1. Lưu Order trước**
         Order order = Order.builder()
@@ -239,12 +253,20 @@ public class OrderServiceImpl implements OrderService {
         this.cartService.clearCart(findUser.getCart().getId(), placeOrderRequest.getOrderItemIds());
 
         // Payment process
-        String paymentRedirectUrl = "";  // Implement payment logic here
+        PaymentResponse paymentResponse = null;
+        if(paymentMethodEnum.equals(PAYMENT_METHOD.CASH)) {
+            this.paymentService.createPaymentCash(order);
+        } else {
+            paymentResponse = this.paymentService.createPayment(
+                    new PaymentRequest(BigDecimal.valueOf(totalPrice), CURRENCY.VND.name(), ipAddress), savedOrder, paymentThirdParty
+            );
+        }
 
         return PlaceOrderResponse.builder()
                 .orderId(savedOrder.getId())
                 .orderStatus(savedOrder.getStatus().name())
-                .paymentRedirectUrl(paymentRedirectUrl)
+                .paymentRedirectUrl(paymentMethodEnum.equals(PAYMENT_METHOD.BANKING) ? paymentResponse.getRedirectUrl() : null)
+                .isPaidByCash(paymentMethodEnum.equals(PAYMENT_METHOD.CASH))
                 .build();
     }
 
@@ -421,7 +443,10 @@ public class OrderServiceImpl implements OrderService {
             order.setStatus(ORDER_STATUS.COMPLETED);
         }
 
-        orderRepository.save(order);
+        Order savedOrder = orderRepository.save(order);
+        if (savedOrder.getStatus().equals(ORDER_STATUS.COMPLETED) && savedOrder.getPaymentMethod().equals(PAYMENT_METHOD.CASH)) {
+            this.paymentService.updatePaymentCash(savedOrder);
+        }
 
         return "Success";
     }

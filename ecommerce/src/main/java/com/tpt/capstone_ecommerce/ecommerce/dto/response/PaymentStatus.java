@@ -1,18 +1,14 @@
 package com.tpt.capstone_ecommerce.ecommerce.dto.response;
 
-
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Builder
+@Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Data
-public class PlaceOrderResponse {
+public class PaymentStatus {
+    private String transactionId;  // ID giao dịch từ cổng thanh toán
+    private String status;         // Trạng thái giao dịch (PENDING, SUCCESS, FAILED, REFUNDED)
     private String orderId;
-    private String orderStatus;
-    private String paymentRedirectUrl;
-    private boolean isPaidByCash;
 }
