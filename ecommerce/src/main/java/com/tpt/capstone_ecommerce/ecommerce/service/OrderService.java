@@ -8,7 +8,7 @@ import org.apache.coyote.BadRequestException;
 
 public interface OrderService {
     CheckoutOrderResponse checkoutOrder(CheckoutOrderRequest checkoutOrderRequest);
-    PlaceOrderResponse placeOrder(String email, PlaceOrderRequest placeOrderRequest) throws BadRequestException;
+    PlaceOrderResponse placeOrder(String email, PlaceOrderRequest placeOrderRequest, String ipAddress) throws Exception;
     OrderDetailResponse getOrderDetail(String orderId) throws NotFoundException;
     String cancelOrder(String orderId) throws NotFoundException, BadRequestException;
     OrderItemResponse getOrderItemDetailByShop (String orderItemId) throws NotFoundException;

@@ -45,8 +45,7 @@ public class Payment {
     @Min(value = 0, message = "Min total price is 0")
     private double totalPrice;
 
-    @Column(nullable = false, unique = true, name = "transaction_id")
-    @NotBlank(message = "Transaction id cannot be blank")
+    @Column(nullable = true, unique = true, name = "transaction_id")
     private String transactionId;
 
     @Column(nullable = false, name = "created_at", updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
