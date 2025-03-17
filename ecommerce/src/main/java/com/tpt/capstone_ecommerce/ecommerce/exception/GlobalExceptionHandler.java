@@ -9,6 +9,7 @@ import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.transaction.TransactionSystemException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -26,6 +27,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<APIErrorResponse> handleNoResourceFound(NoResourceFoundException ex) {
         APIErrorResponse response = APIErrorResponse.builder().message(ex.getResourcePath()).status("Error").build();
+        return new ResponseEntity<>(
+                response,
+                HttpStatus.NOT_FOUND
+        );
+    }
+
+    @ExceptionHandler(TransactionSystemException.class)
+    public ResponseEntity<APIErrorResponse> handleTransaction(TransactionSystemException ex) {
+        ex.printStackTrace();
+        APIErrorResponse response = APIErrorResponse.builder().message(ex.getMessage()).status("Error").build();
         return new ResponseEntity<>(
                 response,
                 HttpStatus.NOT_FOUND

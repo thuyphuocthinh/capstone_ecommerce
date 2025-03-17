@@ -7,6 +7,7 @@ import com.tpt.capstone_ecommerce.ecommerce.dto.response.APISuccessResponse;
 import com.tpt.capstone_ecommerce.ecommerce.enums.DISCOUNT_STATUS;
 import com.tpt.capstone_ecommerce.ecommerce.exception.NotFoundException;
 import com.tpt.capstone_ecommerce.ecommerce.service.DiscountService;
+import com.tpt.capstone_ecommerce.ecommerce.service.OrderService;
 import jakarta.validation.Valid;
 import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
@@ -20,8 +21,11 @@ import org.springframework.web.bind.annotation.*;
 public class AdminController {
     private final DiscountService discountService;
 
-    public AdminController(DiscountService discountService) {
+    private final OrderService orderService;
+
+    public AdminController(DiscountService discountService, OrderService orderService) {
         this.discountService = discountService;
+        this.orderService = orderService;
     }
 
     @PostMapping("/{id}/discounts")
@@ -82,5 +86,33 @@ public class AdminController {
                 .data(this.discountService.changeDiscountStatus(id, status.name()))
                 .build();
         return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @GetMapping("/{id}/orders")
+    public ResponseEntity<?> getOrdersByAdminHandler(
+            @PathVariable String id,
+            @RequestParam(name = "pageNumber", required = false, defaultValue = AppConstant.PAGE_NUMBER) Integer pageNumber,
+            @RequestParam(name = "pageSize", required = false, defaultValue = AppConstant.PAGE_SIZE) Integer pageSize
+    ) throws BadRequestException {
+        return new ResponseEntity<>(
+                this.orderService.getListOrderByAdmin(pageNumber, pageSize),
+                HttpStatus.OK
+        );
+    }
+
+    @GetMapping("/orders/{id}")
+    public ResponseEntity<?> getOrdersByAdminHandler(
+            @PathVariable String id
+    ) throws BadRequestException {
+        APISuccessResponse<?> apiSuccessResponse = APISuccessResponse
+                .builder()
+                .message("Success")
+                .data(this.orderService.getOrderDetail(id))
+                .build();
+        
+        return new ResponseEntity<>(
+                apiSuccessResponse,
+                HttpStatus.OK
+        );
     }
 }

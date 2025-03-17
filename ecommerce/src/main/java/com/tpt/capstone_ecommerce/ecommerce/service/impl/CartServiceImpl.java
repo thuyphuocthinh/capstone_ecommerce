@@ -55,6 +55,7 @@ public class CartServiceImpl implements CartService {
                     .id(cartItem.getId())
                     .unitPrice(cartItem.getUnitPrice())
                     .quantity(cartItem.getQuantity())
+                    .shopId(cartItem.getSku().getSpu().getShop().getId())
                     .discount(cartItem.getDiscount())
                     .skuId(cartItem.getSku().getId())
                     .skuName(cartItem.getSku().getName())
@@ -164,9 +165,15 @@ public class CartServiceImpl implements CartService {
         Cart findCart = this.cartRepository.findById(cartId)
                 .orElseThrow(() -> new NotFoundException(CartErrorConstant.CART_NOT_FOUND));
 
+        List<CartItem> cartItemsPurchased = this.cartItemRepository.findAllById(listOfCartItemIds);
+
         List<CartItem> cartItems = findCart.getCartItems();
 
+        double totalPrice = cartItemsPurchased.stream().mapToDouble(CartItem::getTotalPrice).sum();
+        int totalQuantity = cartItemsPurchased.stream().mapToInt(CartItem::getQuantity).sum();
         cartItems.removeIf(cartItem -> listOfCartItemIds.contains(cartItem.getId()));
+        findCart.setTotalPrice(findCart.getTotalPrice() - totalPrice);
+        findCart.setTotalQuantity(findCart.getTotalQuantity() -  totalQuantity);
 
         cartRepository.save(findCart);
 
