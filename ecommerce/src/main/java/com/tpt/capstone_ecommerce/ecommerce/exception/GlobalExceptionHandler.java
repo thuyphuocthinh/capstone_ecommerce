@@ -9,6 +9,8 @@ import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.transaction.TransactionSystemException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -28,6 +30,41 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(
                 response,
                 HttpStatus.NOT_FOUND
+        );
+    }
+
+    @ExceptionHandler(TransactionSystemException.class)
+    public ResponseEntity<APIErrorResponse> handleTransaction(TransactionSystemException ex) {
+        ex.printStackTrace();
+        APIErrorResponse response = APIErrorResponse.builder().message(ex.getMessage()).status("Error").build();
+        return new ResponseEntity<>(
+                response,
+                HttpStatus.NOT_FOUND
+        );
+    }
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<APIErrorResponse> handleRuntimeException(RuntimeException ex) {
+        APIErrorResponse response = APIErrorResponse.builder().message(ex.getMessage()).status("Error").build();
+        return new ResponseEntity<>(
+                response,
+                HttpStatus.BAD_REQUEST
+        );
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, String>> handleGenericException(Exception ex) {
+        Map<String, String> response = new HashMap<>();
+        response.put("error", "Internal Server Error: " + ex.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<APIErrorResponse> handleNoMethodSupport(HttpRequestMethodNotSupportedException ex) {
+        APIErrorResponse response = APIErrorResponse.builder().message(ex.getMessage()).status("Error").build();
+        return new ResponseEntity<>(
+                response,
+                HttpStatus.HTTP_VERSION_NOT_SUPPORTED
         );
     }
 
@@ -96,7 +133,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<?> handleNotFoundException(NotFoundException ex) {
-        APIErrorResponse response = APIErrorResponse.builder().message(ex.getMessage()).build();
+        APIErrorResponse response = APIErrorResponse.builder().message(ex.getMessage()).status("Error").build();
         return new ResponseEntity<>(
                 response,
                 HttpStatus.BAD_REQUEST
@@ -105,7 +142,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(TimeExpiredException.class)
     public ResponseEntity<?> handleTimeExpiredException(TimeExpiredException ex) {
-        APIErrorResponse response = APIErrorResponse.builder().message(ex.getMessage()).build();
+        APIErrorResponse response = APIErrorResponse.builder().message(ex.getMessage()).status("Error").build();
         return new ResponseEntity<>(
                 response,
                 HttpStatus.BAD_REQUEST
@@ -114,7 +151,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MessagingException.class)
     public ResponseEntity<?> handleMessagingException(MessagingException ex) {
-        APIErrorResponse response = APIErrorResponse.builder().message(ex.getMessage()).build();
+        APIErrorResponse response = APIErrorResponse.builder().message(ex.getMessage()).status("Error").build();
         return new ResponseEntity<>(
                 response,
                 HttpStatus.BAD_REQUEST
@@ -123,7 +160,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IOException.class)
     public ResponseEntity<?> handleIOException(IOException ex) {
-        APIErrorResponse response = APIErrorResponse.builder().message(ex.getMessage()).build();
+        APIErrorResponse response = APIErrorResponse.builder().message(ex.getMessage()).status("Error").build();
         return new ResponseEntity<>(
                 response,
                 HttpStatus.BAD_REQUEST

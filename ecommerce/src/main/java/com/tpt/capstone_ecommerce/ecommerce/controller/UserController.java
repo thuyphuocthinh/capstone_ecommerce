@@ -8,6 +8,7 @@ import com.tpt.capstone_ecommerce.ecommerce.dto.request.UpdateProfileRequest;
 import com.tpt.capstone_ecommerce.ecommerce.dto.request.UpdateUserAddressRequest;
 import com.tpt.capstone_ecommerce.ecommerce.dto.response.APISuccessResponse;
 import com.tpt.capstone_ecommerce.ecommerce.exception.NotFoundException;
+import com.tpt.capstone_ecommerce.ecommerce.service.OrderService;
 import com.tpt.capstone_ecommerce.ecommerce.service.UserService;
 import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
@@ -19,8 +20,11 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
     private final UserService userService;
 
-    public UserController(UserService userService) {
+    private final OrderService orderService;
+
+    public UserController(UserService userService, OrderService orderService) {
         this.userService = userService;
+        this.orderService = orderService;
     }
 
     @GetMapping("/profile")
@@ -45,6 +49,30 @@ public class UserController {
         return new ResponseEntity<>(this.userService.getOrdersByUser(id, pageNumber, pageSize), HttpStatus.OK);
     }
 
+    @GetMapping("/orders/{id}")
+    public ResponseEntity<?> getOrderDetailByUserHandler(
+            @PathVariable String id
+    ) throws NotFoundException {
+        APISuccessResponse<?> apiSuccessResponse = APISuccessResponse.builder()
+                .data(this.orderService.getOrderDetail(id))
+                .message("Success")
+                .build();
+
+        return new ResponseEntity<>(apiSuccessResponse, HttpStatus.OK);
+    }
+
+    @PatchMapping("/orders/{id}/cancel-order")
+    public ResponseEntity<?> cancelOrderByUserHandler(
+            @PathVariable String id
+    ) throws NotFoundException, BadRequestException {
+        APISuccessResponse<?> apiSuccessResponse = APISuccessResponse.builder()
+                .data(this.orderService.cancelOrder(id))
+                .message("Success")
+                .build();
+
+        return new ResponseEntity<>(apiSuccessResponse, HttpStatus.OK);
+    }
+
     @GetMapping("/{id}/addresses")
     public ResponseEntity<?> getAddressesByUserHandler(
             @PathVariable String id,
@@ -58,7 +86,7 @@ public class UserController {
     public ResponseEntity<?> createUserAddressHandler(
             @PathVariable String id,
             @RequestBody CreateUserAddressRequest createUserAddressRequest
-    ) throws NotFoundException {
+    ) throws NotFoundException, BadRequestException {
         APISuccessResponse<Object> apiSuccessResponse = APISuccessResponse
                 .builder()
                 .message("Success")

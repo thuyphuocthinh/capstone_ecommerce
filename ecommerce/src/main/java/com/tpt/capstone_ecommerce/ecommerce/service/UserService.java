@@ -16,7 +16,7 @@ public interface UserService {
     String changePassword(String accessToken, ChangePasswordRequest changePasswordRequest) throws BadRequestException;
     APISuccessResponseWithMetadata<?> getOrdersByUser(String userId, Integer pageNumber, Integer pageSize) throws NotFoundException;
     APISuccessResponseWithMetadata<?> getAddressesByUser(String userId, Integer pageNumber, Integer pageSize) throws NotFoundException;
-    String createUserAddress(String userId, CreateUserAddressRequest createUserAddressRequest);
+    String createUserAddress(String userId, CreateUserAddressRequest createUserAddressRequest) throws BadRequestException;
     String updateUserAddress(String addressId, UpdateUserAddressRequest updateUserAddressRequest) throws NotFoundException ;
     String deleteUserAddress(String addressId) throws NotFoundException;
     UserAddressDetailResponse getUserAddressDetail(String addressId) throws NotFoundException;

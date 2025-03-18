@@ -1,6 +1,7 @@
 package com.tpt.capstone_ecommerce.ecommerce.entity;
 
 import com.tpt.capstone_ecommerce.ecommerce.enums.DISCOUNT_STATUS;
+import com.tpt.capstone_ecommerce.ecommerce.enums.DISCOUNT_TYPE;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -38,6 +39,10 @@ public class Discount {
     @Size(min = 1, max = 50, message = "Discount code length is invalid")
     private String code;
 
+    @Column(nullable = false, unique = true, length = 1, name = "is_global")
+    @NotNull(message = "Discount global or shop cannot be null")
+    private Boolean isGlobal;
+
     @Lob
     @Column(nullable = false, columnDefinition = "TEXT", name = "description")
     private String description;
@@ -58,6 +63,11 @@ public class Discount {
     @Column(nullable = false, length = 15, name = "status")
     @NotNull(message = "Discount status cannot be null")
     private DISCOUNT_STATUS status = DISCOUNT_STATUS.ACTIVE;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 15, name = "type")
+    @NotNull(message = "Discount type cannot be null")
+    private DISCOUNT_TYPE type;
 
     @Column(nullable = false, name = "start_date", updatable = false)
     private LocalDateTime startDate;
@@ -80,6 +90,9 @@ public class Discount {
         }
         if (endDate == null) {
             endDate = startDate.plusDays(30);
+        }
+        if(status == null) {
+            status = DISCOUNT_STATUS.ACTIVE;
         }
     }
 }
