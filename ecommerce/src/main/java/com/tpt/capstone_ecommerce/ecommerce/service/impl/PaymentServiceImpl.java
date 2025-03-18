@@ -1,19 +1,27 @@
 package com.tpt.capstone_ecommerce.ecommerce.service.impl;
 
 import com.tpt.capstone_ecommerce.ecommerce.constant.OrderErrorConstant;
+import com.tpt.capstone_ecommerce.ecommerce.constant.PaymenErrorConstant;
 import com.tpt.capstone_ecommerce.ecommerce.constant.PaymentErrorConstant;
 import com.tpt.capstone_ecommerce.ecommerce.dto.request.PaymentRequest;
+import com.tpt.capstone_ecommerce.ecommerce.dto.request.RetryPaymentRequest;
 import com.tpt.capstone_ecommerce.ecommerce.dto.response.PaymentResponse;
+import com.tpt.capstone_ecommerce.ecommerce.dto.response.RetryPaymentResponse;
 import com.tpt.capstone_ecommerce.ecommerce.entity.Order;
 import com.tpt.capstone_ecommerce.ecommerce.entity.Payment;
+import com.tpt.capstone_ecommerce.ecommerce.enums.CURRENCY;
 import com.tpt.capstone_ecommerce.ecommerce.enums.PAYMENT_METHOD;
 import com.tpt.capstone_ecommerce.ecommerce.enums.PAYMENT_STATUS;
+import com.tpt.capstone_ecommerce.ecommerce.enums.PAYMENT_THIRD_PARTIES;
 import com.tpt.capstone_ecommerce.ecommerce.exception.NotFoundException;
 import com.tpt.capstone_ecommerce.ecommerce.repository.OrderRepository;
 import com.tpt.capstone_ecommerce.ecommerce.repository.PaymentRepository;
 import com.tpt.capstone_ecommerce.ecommerce.service.PaymentService;
 import com.tpt.capstone_ecommerce.ecommerce.service.factory.PaymentServiceFactory;
+import org.apache.coyote.BadRequestException;
 import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
 
 @Service
 public class PaymentServiceImpl implements PaymentService {
@@ -79,5 +87,20 @@ public class PaymentServiceImpl implements PaymentService {
         payment.setPaymentStatus(PAYMENT_STATUS.SUCCESS);
         this.paymentRepository.save(payment);
 
+    }
+
+    @Override
+    public RetryPaymentResponse retryOnlinePaymentHandler(RetryPaymentRequest request, String ipAddress) throws Exception {
+        String paymentThirdParty = request.getPaymentThirdParty().name();
+
+        Order order = this.orderRepository.findById(request.getOrderId())
+                .orElseThrow(() -> new NotFoundException(OrderErrorConstant.ORDER_NOT_FOUND));
+        PaymentResponse paymentResponse = this.paymentServiceFactory.getPaymentService(paymentThirdParty).createPayment(
+                new PaymentRequest(BigDecimal.valueOf(order.getFinalTotalPrice()), CURRENCY.VND.name(), ipAddress),
+                order
+        );
+        return RetryPaymentResponse.builder()
+                .redirectUrl(paymentResponse.getRedirectUrl())
+                .build();
     }
 }

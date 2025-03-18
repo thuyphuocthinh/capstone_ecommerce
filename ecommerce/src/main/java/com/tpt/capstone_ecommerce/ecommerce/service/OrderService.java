@@ -15,5 +15,6 @@ public interface OrderService {
     APISuccessResponseWithMetadata<?> getListOrderByShop(String shopId, Integer pageNumber, Integer pageSize) throws NotFoundException;
     APISuccessResponseWithMetadata<?> getListOrderByAdmin(Integer pageNumber, Integer pageSize) throws NotFoundException;
     String updateOrderItemStatusByShop(String orderItemId, String statusChange) throws NotFoundException, BadRequestException;
-    String updateOrderStatus(String orderId) throws NotFoundException;
+    void updateOrderStatus(String orderId) throws NotFoundException;
+    OrderRetryPaymentResponse getOrderRetryPayment(String orderId) throws NotFoundException;
 }
