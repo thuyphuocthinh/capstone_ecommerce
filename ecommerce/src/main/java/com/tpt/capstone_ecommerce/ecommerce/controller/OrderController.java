@@ -27,6 +27,15 @@ public class OrderController {
         this.jwtProvider = jwtProvider;
     }
 
+    @GetMapping("/{id}/retry-payment")
+    public ResponseEntity<?> orderRetryPaymentHandler(@PathVariable String id) {
+        APISuccessResponse<?> apiSuccessResponse = APISuccessResponse.builder()
+                .message("Success")
+                .data(this.orderService.getOrderRetryPayment(id))
+                .build();
+        return new ResponseEntity<>(apiSuccessResponse, HttpStatus.OK);
+    }
+
     @PostMapping("/check-out")
     public ResponseEntity<?> checkOutHandler(@Valid @RequestBody CheckoutOrderRequest checkoutOrderRequest) {
         APISuccessResponse<?> apiSuccessResponse = APISuccessResponse.builder()

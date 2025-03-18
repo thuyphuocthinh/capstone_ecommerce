@@ -13,17 +13,13 @@ import com.tpt.capstone_ecommerce.ecommerce.repository.*;
 import com.tpt.capstone_ecommerce.ecommerce.service.CartService;
 import com.tpt.capstone_ecommerce.ecommerce.service.OrderService;
 import com.tpt.capstone_ecommerce.ecommerce.service.PaymentService;
-import com.tpt.capstone_ecommerce.ecommerce.service.factory.PaymentServiceFactory;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.BadRequestException;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.TransactionSystemException;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -52,7 +48,9 @@ public class OrderServiceImpl implements OrderService {
 
     private final PaymentService paymentService;
 
-    public OrderServiceImpl(CartItemRepository cartItemRepository, OrderRepository orderRepository, OrderItemRepository orderItemRepository, SkuRepository skuRepository, AddressRepository addressRepository, DiscountRepository discountRepository, UserRepository userRepository, CartService cartService, PaymentService paymentService) {
+    private final PaymentRepository paymentRepository;
+
+    public OrderServiceImpl(CartItemRepository cartItemRepository, OrderRepository orderRepository, OrderItemRepository orderItemRepository, SkuRepository skuRepository, AddressRepository addressRepository, DiscountRepository discountRepository, UserRepository userRepository, CartService cartService, PaymentService paymentService, PaymentRepository paymentRepository) {
         this.cartItemRepository = cartItemRepository;
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
@@ -62,6 +60,7 @@ public class OrderServiceImpl implements OrderService {
         this.userRepository = userRepository;
         this.cartService = cartService;
         this.paymentService = paymentService;
+        this.paymentRepository = paymentRepository;
     }
 
     @Override
@@ -422,7 +421,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public String updateOrderStatus(String orderId) throws NotFoundException {
+    public void updateOrderStatus(String orderId) throws NotFoundException {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new NotFoundException(OrderErrorConstant.ORDER_NOT_FOUND));
 
@@ -448,6 +447,34 @@ public class OrderServiceImpl implements OrderService {
             this.paymentService.updatePaymentCash(savedOrder);
         }
 
-        return "Success";
+    }
+
+    @Override
+    public OrderRetryPaymentResponse getOrderRetryPayment(String orderId) throws NotFoundException {
+        Order findOrder = this.orderRepository.findById(orderId)
+                .orElseThrow(() -> new NotFoundException(OrderErrorConstant.ORDER_NOT_FOUND));
+
+        Payment findPayment = this.paymentRepository.findByOrderId(orderId)
+                .orElseThrow(() -> new NotFoundException(PaymentErrorConstant.PAYMENT_NOT_FOUND));
+
+        List<OrderItem> orderItems = orderItemRepository.findAllByOrderId(orderId);
+        List<OrderItemResponse> orderItemResponses = orderItems.stream().map(orderItem -> {
+            return OrderItemResponse.builder()
+                    .orderItemId(orderItem.getId())
+                    .skuId(orderItem.getSku().getId())
+                    .quantity(orderItem.getQuantity())
+                    .price(orderItem.getPrice())
+                    .build();
+        }).toList();
+
+        return OrderRetryPaymentResponse.builder()
+                .orderId(findOrder.getId())
+                .paymentId(findPayment.getId())
+                .orderStatus(findOrder.getStatus().name())
+                .finalPrice(findOrder.getFinalTotalPrice())
+                .totalPrice(findOrder.getTotalPrice())
+                .totalQuantity(findOrder.getTotalQuantity())
+                .orderItemResponses(orderItemResponses)
+                .build();
     }
 }
