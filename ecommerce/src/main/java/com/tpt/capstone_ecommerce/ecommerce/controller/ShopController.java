@@ -27,7 +27,6 @@ import java.io.IOException;
 @RequestMapping("/api/v1/shops")
 @PreAuthorize("hasRole('ROLE_SELLER')")
 public class ShopController {
-
     private final ShopService shopService;
 
     private final DiscountService discountService;
