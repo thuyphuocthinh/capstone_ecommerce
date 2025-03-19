@@ -8,6 +8,7 @@ import com.tpt.capstone_ecommerce.ecommerce.enums.DISCOUNT_STATUS;
 import com.tpt.capstone_ecommerce.ecommerce.exception.NotFoundException;
 import com.tpt.capstone_ecommerce.ecommerce.service.DiscountService;
 import com.tpt.capstone_ecommerce.ecommerce.service.OrderService;
+import com.tpt.capstone_ecommerce.ecommerce.service.ShopService;
 import jakarta.validation.Valid;
 import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
@@ -23,9 +24,24 @@ public class AdminController {
 
     private final OrderService orderService;
 
-    public AdminController(DiscountService discountService, OrderService orderService) {
+    private final ShopService shopService;
+
+    public AdminController(DiscountService discountService, OrderService orderService, ShopService shopService) {
         this.discountService = discountService;
         this.orderService = orderService;
+        this.shopService = shopService;
+    }
+
+    @PatchMapping("/shops/{id}/change-status/{status}")
+    public ResponseEntity<?> changeShopStatusHandler(
+            @PathVariable String id,
+            @PathVariable String status
+    ) throws BadRequestException {
+        APISuccessResponse<?> response = APISuccessResponse.builder()
+                .message("Success")
+                .data(this.shopService.changeShopStatus(id, status))
+                .build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     @PostMapping("/{id}/discounts")
