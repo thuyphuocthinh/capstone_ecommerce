@@ -28,7 +28,7 @@ public class OrderController {
     }
 
     @GetMapping("/{id}/retry-payment")
-    public ResponseEntity<?> orderRetryPaymentHandler(@PathVariable String id) {
+    public ResponseEntity<?> orderRetryPaymentHandler(@PathVariable String id) throws BadRequestException {
         APISuccessResponse<?> apiSuccessResponse = APISuccessResponse.builder()
                 .message("Success")
                 .data(this.orderService.getOrderRetryPayment(id))
@@ -37,7 +37,7 @@ public class OrderController {
     }
 
     @PostMapping("/check-out")
-    public ResponseEntity<?> checkOutHandler(@Valid @RequestBody CheckoutOrderRequest checkoutOrderRequest) {
+    public ResponseEntity<?> checkOutHandler(@Valid @RequestBody CheckoutOrderRequest checkoutOrderRequest) throws BadRequestException {
         APISuccessResponse<?> apiSuccessResponse = APISuccessResponse.builder()
                 .message("Success")
                 .data(this.orderService.checkoutOrder(checkoutOrderRequest))

@@ -1,5 +1,6 @@
 package com.tpt.capstone_ecommerce.ecommerce.service.impl;
 
+import com.tpt.capstone_ecommerce.ecommerce.constant.AuthConstantError;
 import com.tpt.capstone_ecommerce.ecommerce.constant.SkuErrorConstant;
 import com.tpt.capstone_ecommerce.ecommerce.constant.SpuErrorConstant;
 import com.tpt.capstone_ecommerce.ecommerce.dto.request.CreateSkuRequest;
@@ -14,8 +15,10 @@ import com.tpt.capstone_ecommerce.ecommerce.repository.SkuRepository;
 import com.tpt.capstone_ecommerce.ecommerce.repository.SpuRepository;
 import com.tpt.capstone_ecommerce.ecommerce.service.SkuService;
 import com.tpt.capstone_ecommerce.ecommerce.service.UploadService;
+import com.tpt.capstone_ecommerce.ecommerce.utils.SecurityUtils;
 import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -49,6 +52,10 @@ public class SkuServiceImpl implements SkuService {
         MultipartFile file = createSkuRequest.getFile();
 
         Spu findSpu = this.spuRepository.findById(id).orElseThrow(() -> new NotFoundException(SpuErrorConstant.SPU_NOT_FOUND));
+        String currentUserId = SecurityUtils.getCurrentUserId();
+        if(!findSpu.getShop().getOwner().getId().equals(currentUserId)) {
+            throw new BadRequestException(AuthConstantError.NOT_ALLOWED_TO_ACCESS_RESOURCE);
+        }
 
         Map<String, Object> uploadResult = this.uploadService.uploadOneFile(file);
         String imageUrl = (String) uploadResult.getOrDefault("secure_url", "");
@@ -97,6 +104,11 @@ public class SkuServiceImpl implements SkuService {
 
         Sku findSku = this.skuRepository.findById(skuId).orElseThrow(() -> new NotFoundException(SkuErrorConstant.SKU_NOT_FOUND));
 
+        String currentUserId = SecurityUtils.getCurrentUserId();
+        if(!findSku.getSpu().getShop().getOwner().getId().equals(currentUserId)) {
+            throw new BadRequestException(AuthConstantError.NOT_ALLOWED_TO_ACCESS_RESOURCE);
+        }
+
         if (name != null) {
             findSku.setName(name.trim());
         }
@@ -136,6 +148,11 @@ public class SkuServiceImpl implements SkuService {
     @Override
     public String deleteSku(String skuId, boolean isHard) throws NotFoundException, BadRequestException {
         Sku findSku = this.skuRepository.findById(skuId).orElseThrow(() -> new NotFoundException(SkuErrorConstant.SKU_NOT_FOUND));
+
+        String currentUserId = SecurityUtils.getCurrentUserId();
+        if(!findSku.getSpu().getShop().getOwner().getId().equals(currentUserId)) {
+            throw new BadRequestException(AuthConstantError.NOT_ALLOWED_TO_ACCESS_RESOURCE);
+        }
 
         if(isHard) {
             this.skuRepository.delete(findSku);
@@ -195,6 +212,11 @@ public class SkuServiceImpl implements SkuService {
     @Override
     public SkuDetailResponse changeStatus(String skuId, String status) throws NotFoundException, BadRequestException {
         Sku findSku = this.skuRepository.findById(skuId).orElseThrow(() -> new NotFoundException(SkuErrorConstant.SKU_NOT_FOUND));
+
+        String currentUserId = SecurityUtils.getCurrentUserId();
+        if(!findSku.getSpu().getShop().getOwner().getId().equals(currentUserId)) {
+            throw new BadRequestException(AuthConstantError.NOT_ALLOWED_TO_ACCESS_RESOURCE);
+        }
 
         if(findSku.getStatus() == SKU_STATUS.valueOf(status)) {
             throw new BadRequestException(SpuErrorConstant.INVALID_STATUS);

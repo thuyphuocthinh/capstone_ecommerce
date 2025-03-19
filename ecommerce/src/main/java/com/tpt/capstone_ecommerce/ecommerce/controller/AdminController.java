@@ -69,7 +69,7 @@ public class AdminController {
     }
 
     @GetMapping("/discounts/{id}")
-    public ResponseEntity<?> getDiscountDetailByAdminHandler(@PathVariable String id) throws NotFoundException {
+    public ResponseEntity<?> getDiscountDetailByAdminHandler(@PathVariable String id) throws NotFoundException, BadRequestException {
         APISuccessResponse<?> response = APISuccessResponse.builder()
                 .message("Success")
                 .data(this.discountService.getDiscountDetail(id))
@@ -87,7 +87,7 @@ public class AdminController {
     }
 
     @DeleteMapping("/discounts/{id}")
-    public ResponseEntity<?> deleteDiscountByAdminHandler(@PathVariable String id) throws NotFoundException {
+    public ResponseEntity<?> deleteDiscountByAdminHandler(@PathVariable String id) throws NotFoundException, BadRequestException {
         APISuccessResponse<?> response = APISuccessResponse.builder()
                 .message("Success")
                 .data(this.discountService.deleteDiscount(id))

@@ -13,6 +13,7 @@ import com.tpt.capstone_ecommerce.ecommerce.service.UserService;
 import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -40,6 +41,7 @@ public class UserController {
         return new ResponseEntity<>(apiSuccessResponse, HttpStatus.OK);
     }
 
+    @PreAuthorize("@customSecurityExpression.isOwner(#id, authentication)")
     @GetMapping("/{id}/orders")
     public ResponseEntity<?> getOrdersByUserHandler(
             @PathVariable String id,
@@ -52,7 +54,7 @@ public class UserController {
     @GetMapping("/orders/{id}")
     public ResponseEntity<?> getOrderDetailByUserHandler(
             @PathVariable String id
-    ) throws NotFoundException {
+    ) throws NotFoundException, BadRequestException {
         APISuccessResponse<?> apiSuccessResponse = APISuccessResponse.builder()
                 .data(this.orderService.getOrderDetail(id))
                 .message("Success")
@@ -73,6 +75,7 @@ public class UserController {
         return new ResponseEntity<>(apiSuccessResponse, HttpStatus.OK);
     }
 
+    @PreAuthorize("@customSecurityExpression.isOwner(#id, authentication)")
     @GetMapping("/{id}/addresses")
     public ResponseEntity<?> getAddressesByUserHandler(
             @PathVariable String id,
@@ -82,6 +85,7 @@ public class UserController {
         return new ResponseEntity<>(this.userService.getAddressesByUser(id, pageNumber, pageSize), HttpStatus.OK);
     }
 
+    @PreAuthorize("@customSecurityExpression.isOwner(#id, authentication)")
     @PostMapping("/{id}/addresses")
     public ResponseEntity<?> createUserAddressHandler(
             @PathVariable String id,

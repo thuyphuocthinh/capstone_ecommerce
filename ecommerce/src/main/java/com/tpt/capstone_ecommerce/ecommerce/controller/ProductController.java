@@ -33,14 +33,7 @@ public class ProductController {
         this.skuService = skuService;
     }
 
-    @PostMapping("/spus")
-    public ResponseEntity<?> createSpuHandler(@Valid @ModelAttribute CreateSpuRequest request) throws IOException {
-        APISuccessResponse<Object> apiResponse = APISuccessResponse.builder()
-                .data(spuService.createSpu(request))
-                .message("Success")
-                .build();
-        return new ResponseEntity<>(apiResponse, HttpStatus.CREATED);
-    }
+
 
     @GetMapping("/spus/{id}")
     public ResponseEntity<?> getSpuDetailHandler(@PathVariable String id) throws BadRequestException {
@@ -65,15 +58,6 @@ public class ProductController {
             @RequestParam(name = "pageSize", required = false, defaultValue = AppConstant.PAGE_SIZE) Integer pageSize
     ) {
         return new ResponseEntity<>(this.spuService.getListsSpuDashboard(pageNumber, pageSize), HttpStatus.OK);
-    }
-
-    @GetMapping("/spus/shops/{id}")
-    public ResponseEntity<?> getSpuByShopHandler(
-            @PathVariable String id,
-            @RequestParam(name = "pageNumber", required = false, defaultValue = AppConstant.PAGE_NUMBER) Integer pageNumber,
-            @RequestParam(name = "pageSize", required = false, defaultValue = AppConstant.PAGE_SIZE) Integer pageSize
-    ) {
-        return new ResponseEntity<>(this.spuService.getListsSpuByShop(id, pageNumber, pageSize), HttpStatus.OK);
     }
 
     @GetMapping("/spus/brands/{id}")
@@ -107,50 +91,6 @@ public class ProductController {
         return new ResponseEntity<>(this.spuService.searchSpuByName(name, brandIds, categoryIds, sortBy, sortDirection,  pageNumber, pageSize), HttpStatus.OK);
     }
 
-    @PatchMapping("/spus/{id}")
-    public ResponseEntity<?> updateSpuHandler(@PathVariable String id, @ModelAttribute UpdateSpuRequest request) throws IOException {
-        APISuccessResponse<Object> apiResponse = APISuccessResponse.builder()
-                .data(spuService.updateSpu(id, request))
-                .message("Success")
-                .build();
-        return new ResponseEntity<>(apiResponse, HttpStatus.OK);
-    }
-
-    @PatchMapping("/spus/{id}/change-status/{status}")
-    public ResponseEntity<?> updateSpuStatusHandler(@PathVariable String id, @PathVariable String status) throws IOException {
-        if(!status.equals(SPU_STATUS.ACTIVE.name()) && !status.equals(SPU_STATUS.INACTIVE.name())) {
-            throw new BadRequestException(SpuErrorConstant.INVALID_STATUS);
-        }
-
-        APISuccessResponse<Object> apiResponse = APISuccessResponse.builder()
-                .data(spuService.changeSpuStatus(id, status))
-                .message("Success")
-                .build();
-        return new ResponseEntity<>(apiResponse, HttpStatus.OK);
-    }
-
-    @DeleteMapping("/spus/{id}/hard/{isHard}")
-    public ResponseEntity<?> deleteSpuHandler(@PathVariable String id, @PathVariable Boolean isHard) throws BadRequestException {
-        if(isHard == null){
-            throw new BadRequestException(SpuErrorConstant.LACK_IS_HARD);
-        }
-
-        APISuccessResponse<Object> apiResponse = APISuccessResponse.builder()
-                .data(spuService.deleteSpu(id, isHard))
-                .message("Success")
-                .build();
-        return new ResponseEntity<>(apiResponse, HttpStatus.OK);
-    }
-
-    @PostMapping("/spus/{id}/skus")
-    public ResponseEntity<?> createSkuHandler(@Valid @ModelAttribute CreateSkuRequest request, @PathVariable String id) throws IOException {
-        APISuccessResponse<Object> apiResponse = APISuccessResponse.builder()
-                .data(skuService.addSku(id, request))
-                .message("Success")
-                .build();
-        return new ResponseEntity<>(apiResponse, HttpStatus.CREATED);
-    }
-
     @GetMapping("/spus/skus/{id}")
     public ResponseEntity<?> getSkuDetailHandler(@PathVariable String id) throws IOException {
         APISuccessResponse<Object> apiResponse = APISuccessResponse.builder()
@@ -164,41 +104,6 @@ public class ProductController {
     public ResponseEntity<?> getListSkusBySpuHandler(@PathVariable String id) throws IOException {
         APISuccessResponse<Object> apiResponse = APISuccessResponse.builder()
                 .data(skuService.getListSkusForClientBySpuId(id))
-                .message("Success")
-                .build();
-        return new ResponseEntity<>(apiResponse, HttpStatus.OK);
-    }
-
-    @PatchMapping("/spus/skus/{id}")
-    public ResponseEntity<?> updateSkuHandler(@PathVariable String id, @ModelAttribute UpdateSkuRequest request) throws IOException {
-        APISuccessResponse<Object> apiResponse = APISuccessResponse.builder()
-                .data(skuService.updateSku(id, request))
-                .message("Success")
-                .build();
-        return new ResponseEntity<>(apiResponse, HttpStatus.OK);
-    }
-
-    @DeleteMapping("/spus/skus/{id}/hard/{isHard}")
-    public ResponseEntity<?> deleteSkuHandler(@PathVariable String id, @PathVariable Boolean isHard) throws BadRequestException {
-        if(isHard == null){
-            throw new BadRequestException(SpuErrorConstant.LACK_IS_HARD);
-        }
-
-        APISuccessResponse<Object> apiResponse = APISuccessResponse.builder()
-                .data(skuService.deleteSku(id, isHard))
-                .message("Success")
-                .build();
-        return new ResponseEntity<>(apiResponse, HttpStatus.OK);
-    }
-
-    @PatchMapping("/spus/skus/{id}/change-status/{status}")
-    public ResponseEntity<?> updateSkuStatusHandler(@PathVariable String id, @PathVariable String status) throws IOException {
-        if(!status.equals(SKU_STATUS.ACTIVE.name()) && !status.equals(SKU_STATUS.INACTIVE.name())) {
-            throw new BadRequestException(SkuErrorConstant.INVALID_STATUS);
-        }
-
-        APISuccessResponse<Object> apiResponse = APISuccessResponse.builder()
-                .data(skuService.changeStatus(id, status))
                 .message("Success")
                 .build();
         return new ResponseEntity<>(apiResponse, HttpStatus.OK);

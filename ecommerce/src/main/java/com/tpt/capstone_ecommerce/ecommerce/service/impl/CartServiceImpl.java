@@ -1,5 +1,6 @@
 package com.tpt.capstone_ecommerce.ecommerce.service.impl;
 
+import com.tpt.capstone_ecommerce.ecommerce.constant.AuthConstantError;
 import com.tpt.capstone_ecommerce.ecommerce.constant.CartErrorConstant;
 import com.tpt.capstone_ecommerce.ecommerce.constant.SkuErrorConstant;
 import com.tpt.capstone_ecommerce.ecommerce.constant.UserErrorConstant;
@@ -16,8 +17,10 @@ import com.tpt.capstone_ecommerce.ecommerce.repository.CartRepository;
 import com.tpt.capstone_ecommerce.ecommerce.repository.SkuRepository;
 import com.tpt.capstone_ecommerce.ecommerce.repository.UserRepository;
 import com.tpt.capstone_ecommerce.ecommerce.service.CartService;
+import com.tpt.capstone_ecommerce.ecommerce.utils.SecurityUtils;
 import org.apache.coyote.BadRequestException;
 import org.checkerframework.checker.units.qual.N;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -73,6 +76,10 @@ public class CartServiceImpl implements CartService {
     @Override
     public String addCartItemToCart(String cartId, CreateCartItemRequest request) throws NotFoundException, BadRequestException {
         Cart findCart = this.cartRepository.findById(cartId).orElseThrow(() -> new NotFoundException(CartErrorConstant.CART_NOT_FOUND));
+        String currentUserId = SecurityUtils.getCurrentUserId();
+        if(!currentUserId.equals(findCart.getUser().getId())) {
+            throw new BadRequestException(AuthConstantError.NOT_ALLOWED_TO_ACCESS_RESOURCE);
+        }
 
         String skuId = request.getSkuId();
         int quantity = request.getQuantity();
@@ -112,11 +119,16 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public String removeCartItem(String cartItemId) throws NotFoundException {
+    public String removeCartItem(String cartItemId) throws NotFoundException, BadRequestException {
         CartItem findCartItem = this.cartItemRepository.findById(cartItemId)
                 .orElseThrow(() -> new NotFoundException(CartErrorConstant.CART_ITEM_NOT_FOUND));
         Cart findCart = this.cartRepository.findById(findCartItem.getCart().getId())
                 .orElseThrow(() -> new NotFoundException(CartErrorConstant.CART_NOT_FOUND));
+
+        String currentUserId = SecurityUtils.getCurrentUserId();
+        if(!currentUserId.equals(findCart.getUser().getId())) {
+            throw new BadRequestException(AuthConstantError.NOT_ALLOWED_TO_ACCESS_RESOURCE);
+        }
 
         // Cập nhật totalQuantity & totalPrice trước khi xóa
         findCart.setTotalQuantity(findCart.getTotalQuantity() - findCartItem.getQuantity());
@@ -138,6 +150,11 @@ public class CartServiceImpl implements CartService {
     public String updateCartItem(String cartItemId, int quantity) throws NotFoundException, BadRequestException {
         CartItem findCartItem = this.cartItemRepository.findById(cartItemId).orElseThrow(() -> new NotFoundException(CartErrorConstant.CART_ITEM_NOT_FOUND));
         Cart findCart = this.cartRepository.findById(findCartItem.getCart().getId()).orElseThrow(() -> new NotFoundException(CartErrorConstant.CART_NOT_FOUND));
+
+        String currentUserId = SecurityUtils.getCurrentUserId();
+        if(!currentUserId.equals(findCart.getUser().getId())) {
+            throw new BadRequestException(AuthConstantError.NOT_ALLOWED_TO_ACCESS_RESOURCE);
+        }
 
         List<CartItem> cartItems = findCart.getCartItems();
 
@@ -161,9 +178,14 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public String clearCart(String cartId, List<String> listOfCartItemIds) throws NotFoundException {
+    public String clearCart(String cartId, List<String> listOfCartItemIds) throws NotFoundException, BadRequestException {
         Cart findCart = this.cartRepository.findById(cartId)
                 .orElseThrow(() -> new NotFoundException(CartErrorConstant.CART_NOT_FOUND));
+
+        String currentUserId = SecurityUtils.getCurrentUserId();
+        if(!currentUserId.equals(findCart.getUser().getId())) {
+            throw new BadRequestException(AuthConstantError.NOT_ALLOWED_TO_ACCESS_RESOURCE);
+        }
 
         List<CartItem> cartItemsPurchased = this.cartItemRepository.findAllById(listOfCartItemIds);
 

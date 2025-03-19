@@ -13,12 +13,14 @@ import com.tpt.capstone_ecommerce.ecommerce.repository.*;
 import com.tpt.capstone_ecommerce.ecommerce.service.CartService;
 import com.tpt.capstone_ecommerce.ecommerce.service.OrderService;
 import com.tpt.capstone_ecommerce.ecommerce.service.PaymentService;
+import com.tpt.capstone_ecommerce.ecommerce.utils.SecurityUtils;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.BadRequestException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -50,7 +52,9 @@ public class OrderServiceImpl implements OrderService {
 
     private final PaymentRepository paymentRepository;
 
-    public OrderServiceImpl(CartItemRepository cartItemRepository, OrderRepository orderRepository, OrderItemRepository orderItemRepository, SkuRepository skuRepository, AddressRepository addressRepository, DiscountRepository discountRepository, UserRepository userRepository, CartService cartService, PaymentService paymentService, PaymentRepository paymentRepository) {
+    private final ShopRepository shopRepository;
+
+    public OrderServiceImpl(CartItemRepository cartItemRepository, OrderRepository orderRepository, OrderItemRepository orderItemRepository, SkuRepository skuRepository, AddressRepository addressRepository, DiscountRepository discountRepository, UserRepository userRepository, CartService cartService, PaymentService paymentService, PaymentRepository paymentRepository, ShopRepository shopRepository) {
         this.cartItemRepository = cartItemRepository;
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
@@ -61,16 +65,22 @@ public class OrderServiceImpl implements OrderService {
         this.cartService = cartService;
         this.paymentService = paymentService;
         this.paymentRepository = paymentRepository;
+        this.shopRepository = shopRepository;
     }
 
     @Override
-    public CheckoutOrderResponse checkoutOrder(CheckoutOrderRequest checkoutOrderRequest) {
+    public CheckoutOrderResponse checkoutOrder(CheckoutOrderRequest checkoutOrderRequest) throws BadRequestException {
         // step1: validate each cart items and current quantity of each
         List<String> cartItemIds = checkoutOrderRequest.getCartItemIds();
         List<CartItem> cartItems = cartItemRepository.findAllById(cartItemIds);
 
         if (cartItems.size() != cartItemIds.size()) {
             throw new NotFoundException(CartErrorConstant.CART_ITEM_NOT_FOUND);
+        }
+        String currentUserId = SecurityUtils.getCurrentUserId();
+        CartItem firstItem = cartItems.get(0);
+        if (!currentUserId.equals(firstItem.getCart().getUser().getId())) {
+            throw new BadRequestException(AuthConstantError.NOT_ALLOWED_TO_ACCESS_RESOURCE);
         }
 
         List<CartItemDetailResponse> cartItemDetailResponses = new ArrayList<>();
@@ -127,6 +137,11 @@ public class OrderServiceImpl implements OrderService {
         // Validate user
         User findUser = userRepository.findByEmail(email)
                 .orElseThrow(() -> new NotFoundException(UserErrorConstant.USER_NOT_FOUND));
+
+        String currentUserId = SecurityUtils.getCurrentUserId();
+        if(!currentUserId.equals(findUser.getId())) {
+            throw new BadRequestException(AuthConstantError.NOT_ALLOWED_TO_ACCESS_RESOURCE);
+        }
 
         // Validate address
         Address findAddress = addressRepository.findById(addressId)
@@ -270,9 +285,14 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public OrderDetailResponse getOrderDetail(String orderId) throws NotFoundException {
+    public OrderDetailResponse getOrderDetail(String orderId) throws NotFoundException, BadRequestException {
         Order findOrder = this.orderRepository.findById(orderId)
                 .orElseThrow(() -> new NotFoundException(OrderErrorConstant.ORDER_NOT_FOUND));
+
+        String currentUserId = SecurityUtils.getCurrentUserId();
+        if(!currentUserId.equals(findOrder.getUser().getId())) {
+            throw new BadRequestException(AuthConstantError.NOT_ALLOWED_TO_ACCESS_RESOURCE);
+        }
 
         List<OrderItem> orderItems = findOrder.getOrderItems();
         List<OrderItemResponse> orderItemResponses = orderItems.stream().map(order -> {
@@ -305,6 +325,11 @@ public class OrderServiceImpl implements OrderService {
         Order findOrder = this.orderRepository.findById(orderId)
                 .orElseThrow(() -> new NotFoundException(OrderErrorConstant.ORDER_NOT_FOUND));
 
+        String currentUserId = SecurityUtils.getCurrentUserId();
+        if(!currentUserId.equals(findOrder.getUser().getId())) {
+            throw new BadRequestException(AuthConstantError.NOT_ALLOWED_TO_ACCESS_RESOURCE);
+        }
+
         if(
                 findOrder.getStatus().equals(ORDER_STATUS.PARTIALLY_SHIPPED) ||
                 findOrder.getStatus().equals(ORDER_STATUS.CANCELLED) ||
@@ -330,8 +355,13 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public OrderItemResponse getOrderItemDetailByShop(String orderItemId) throws NotFoundException {
+    public OrderItemResponse getOrderItemDetailByShop(String orderItemId) throws NotFoundException, BadRequestException {
         OrderItem findOrderItem = this.orderItemRepository.findById(orderItemId).orElseThrow(() -> new NotFoundException(OrderErrorConstant.ORDER_ITEM_NOT_FOUND));
+
+        String currentUserId = SecurityUtils.getCurrentUserId();
+        if(!currentUserId.equals(findOrderItem.getShop().getId())) {
+            throw new BadRequestException(AuthConstantError.NOT_ALLOWED_TO_ACCESS_RESOURCE);
+        }
 
         return OrderItemResponse.builder()
                 .orderItemId(findOrderItem.getId())
@@ -343,11 +373,17 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public APISuccessResponseWithMetadata<?> getListOrderByShop(String shopId, Integer pageNumber, Integer pageSize) throws NotFoundException {
+    public APISuccessResponseWithMetadata<?> getListOrderByShop(String shopId, Integer pageNumber, Integer pageSize) throws NotFoundException, BadRequestException {
+        Shop findShop = this.shopRepository.findById(shopId).orElseThrow(
+                () -> new NotFoundException(ShopErrorConstant.SHOP_NOT_FOUND)
+        );
+        String currentUserId = SecurityUtils.getCurrentUserId();
+        if(!currentUserId.equals(findShop.getOwner().getId())) {
+            throw new BadRequestException(AuthConstantError.NOT_ALLOWED_TO_ACCESS_RESOURCE);
+        }
+
         Pageable page = PageRequest.of(Math.max(0, pageNumber - 1), pageSize);
-
         Page<OrderItem> orderPage = this.orderItemRepository.findAllByShopId(shopId, page);
-
         List<OrderItem> orderItems = orderPage.getContent();
         List<OrderItemResponse> orderItemResponses = orderItems.stream().map(orderItem -> {
             return OrderItemResponse.builder()
@@ -412,6 +448,11 @@ public class OrderServiceImpl implements OrderService {
             throw new BadRequestException(OrderErrorConstant.ORDER_ITEM_STATUS_EXISTS);
         }
 
+        String currentUserId = SecurityUtils.getCurrentUserId();
+        if(!currentUserId.equals(orderItem.getShop().getId())) {
+            throw new BadRequestException(AuthConstantError.NOT_ALLOWED_TO_ACCESS_RESOURCE);
+        }
+
         orderItem.setStatus(ORDER_ITEM_STATUS.valueOf(statusChange));
         this.orderItemRepository.save(orderItem);
 
@@ -450,9 +491,14 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public OrderRetryPaymentResponse getOrderRetryPayment(String orderId) throws NotFoundException {
+    public OrderRetryPaymentResponse getOrderRetryPayment(String orderId) throws NotFoundException, BadRequestException {
         Order findOrder = this.orderRepository.findById(orderId)
                 .orElseThrow(() -> new NotFoundException(OrderErrorConstant.ORDER_NOT_FOUND));
+
+        String currentUserId = SecurityUtils.getCurrentUserId();
+        if(!currentUserId.equals(findOrder.getUser().getId())) {
+            throw new BadRequestException(AuthConstantError.NOT_ALLOWED_TO_ACCESS_RESOURCE);
+        }
 
         Payment findPayment = this.paymentRepository.findByOrderId(orderId)
                 .orElseThrow(() -> new NotFoundException(PaymentErrorConstant.PAYMENT_NOT_FOUND));

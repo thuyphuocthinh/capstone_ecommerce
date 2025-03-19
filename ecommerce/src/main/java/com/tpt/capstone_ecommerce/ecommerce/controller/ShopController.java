@@ -2,18 +2,17 @@ package com.tpt.capstone_ecommerce.ecommerce.controller;
 
 import com.tpt.capstone_ecommerce.ecommerce.aop.annotation.ValidEnum;
 import com.tpt.capstone_ecommerce.ecommerce.constant.AppConstant;
-import com.tpt.capstone_ecommerce.ecommerce.dto.request.CreateDiscountRequest;
-import com.tpt.capstone_ecommerce.ecommerce.dto.request.CreateShopRequest;
-import com.tpt.capstone_ecommerce.ecommerce.dto.request.UpdateDiscountRequest;
-import com.tpt.capstone_ecommerce.ecommerce.dto.request.UpdateShopRequest;
+import com.tpt.capstone_ecommerce.ecommerce.constant.SkuErrorConstant;
+import com.tpt.capstone_ecommerce.ecommerce.constant.SpuErrorConstant;
+import com.tpt.capstone_ecommerce.ecommerce.dto.request.*;
 import com.tpt.capstone_ecommerce.ecommerce.dto.response.APISuccessResponse;
 import com.tpt.capstone_ecommerce.ecommerce.entity.Shop;
 import com.tpt.capstone_ecommerce.ecommerce.enums.DISCOUNT_STATUS;
 import com.tpt.capstone_ecommerce.ecommerce.enums.ORDER_ITEM_STATUS;
+import com.tpt.capstone_ecommerce.ecommerce.enums.SKU_STATUS;
+import com.tpt.capstone_ecommerce.ecommerce.enums.SPU_STATUS;
 import com.tpt.capstone_ecommerce.ecommerce.exception.NotFoundException;
-import com.tpt.capstone_ecommerce.ecommerce.service.DiscountService;
-import com.tpt.capstone_ecommerce.ecommerce.service.OrderService;
-import com.tpt.capstone_ecommerce.ecommerce.service.ShopService;
+import com.tpt.capstone_ecommerce.ecommerce.service.*;
 import jakarta.validation.Valid;
 import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
@@ -27,17 +26,120 @@ import java.io.IOException;
 @RequestMapping("/api/v1/shops")
 @PreAuthorize("hasRole('ROLE_SELLER')")
 public class ShopController {
-
     private final ShopService shopService;
 
     private final DiscountService discountService;
 
     private final OrderService orderService;
 
-    public ShopController(ShopService shopService, DiscountService discountService, OrderService orderService) {
+    private final SpuService spuService;
+
+    private final SkuService skuService;
+
+    public ShopController(ShopService shopService, DiscountService discountService, OrderService orderService, SpuService spuService, SkuService skuService) {
         this.shopService = shopService;
         this.discountService = discountService;
         this.orderService = orderService;
+        this.spuService = spuService;
+        this.skuService = skuService;
+    }
+
+    @PostMapping("/spus")
+    public ResponseEntity<?> createSpuHandler(@Valid @ModelAttribute CreateSpuRequest request) throws IOException {
+        APISuccessResponse<Object> apiResponse = APISuccessResponse.builder()
+                .data(spuService.createSpu(request))
+                .message("Success")
+                .build();
+        return new ResponseEntity<>(apiResponse, HttpStatus.CREATED);
+    }
+
+    @PreAuthorize("@customSecurityExpression.isShopOwner(#id, authentication)")
+    @GetMapping("/{id}/spus")
+    public ResponseEntity<?> getSpuByShopHandler(
+            @PathVariable String id,
+            @RequestParam(name = "pageNumber", required = false, defaultValue = AppConstant.PAGE_NUMBER) Integer pageNumber,
+            @RequestParam(name = "pageSize", required = false, defaultValue = AppConstant.PAGE_SIZE) Integer pageSize
+    ) throws BadRequestException {
+        return new ResponseEntity<>(this.spuService.getListsSpuByShop(id, pageNumber, pageSize), HttpStatus.OK);
+    }
+
+    @PatchMapping("/spus/skus/{id}")
+    public ResponseEntity<?> updateSkuHandler(@PathVariable String id, @ModelAttribute UpdateSkuRequest request) throws IOException {
+        APISuccessResponse<Object> apiResponse = APISuccessResponse.builder()
+                .data(skuService.updateSku(id, request))
+                .message("Success")
+                .build();
+        return new ResponseEntity<>(apiResponse, HttpStatus.OK);
+    }
+
+    @DeleteMapping("/spus/skus/{id}/hard/{isHard}")
+    public ResponseEntity<?> deleteSkuHandler(@PathVariable String id, @PathVariable Boolean isHard) throws BadRequestException {
+        if(isHard == null){
+            throw new BadRequestException(SpuErrorConstant.LACK_IS_HARD);
+        }
+
+        APISuccessResponse<Object> apiResponse = APISuccessResponse.builder()
+                .data(skuService.deleteSku(id, isHard))
+                .message("Success")
+                .build();
+        return new ResponseEntity<>(apiResponse, HttpStatus.OK);
+    }
+
+    @PatchMapping("/spus/skus/{id}/change-status/{status}")
+    public ResponseEntity<?> updateSkuStatusHandler(@PathVariable String id, @PathVariable String status) throws IOException {
+        if(!status.equals(SKU_STATUS.ACTIVE.name()) && !status.equals(SKU_STATUS.INACTIVE.name())) {
+            throw new BadRequestException(SkuErrorConstant.INVALID_STATUS);
+        }
+
+        APISuccessResponse<Object> apiResponse = APISuccessResponse.builder()
+                .data(skuService.changeStatus(id, status))
+                .message("Success")
+                .build();
+        return new ResponseEntity<>(apiResponse, HttpStatus.OK);
+    }
+
+    @PatchMapping("/spus/{id}")
+    public ResponseEntity<?> updateSpuHandler(@PathVariable String id, @ModelAttribute UpdateSpuRequest request) throws IOException {
+        APISuccessResponse<Object> apiResponse = APISuccessResponse.builder()
+                .data(spuService.updateSpu(id, request))
+                .message("Success")
+                .build();
+        return new ResponseEntity<>(apiResponse, HttpStatus.OK);
+    }
+
+    @PatchMapping("/spus/{id}/change-status/{status}")
+    public ResponseEntity<?> updateSpuStatusHandler(@PathVariable String id, @PathVariable String status) throws IOException {
+        if(!status.equals(SPU_STATUS.ACTIVE.name()) && !status.equals(SPU_STATUS.INACTIVE.name())) {
+            throw new BadRequestException(SpuErrorConstant.INVALID_STATUS);
+        }
+
+        APISuccessResponse<Object> apiResponse = APISuccessResponse.builder()
+                .data(spuService.changeSpuStatus(id, status))
+                .message("Success")
+                .build();
+        return new ResponseEntity<>(apiResponse, HttpStatus.OK);
+    }
+
+    @DeleteMapping("/spus/{id}/hard/{isHard}")
+    public ResponseEntity<?> deleteSpuHandler(@PathVariable String id, @PathVariable Boolean isHard) throws BadRequestException {
+        if(isHard == null){
+            throw new BadRequestException(SpuErrorConstant.LACK_IS_HARD);
+        }
+
+        APISuccessResponse<Object> apiResponse = APISuccessResponse.builder()
+                .data(spuService.deleteSpu(id, isHard))
+                .message("Success")
+                .build();
+        return new ResponseEntity<>(apiResponse, HttpStatus.OK);
+    }
+
+    @PostMapping("/spus/{id}/skus")
+    public ResponseEntity<?> createSkuHandler(@Valid @ModelAttribute CreateSkuRequest request, @PathVariable String id) throws IOException {
+        APISuccessResponse<Object> apiResponse = APISuccessResponse.builder()
+                .data(skuService.addSku(id, request))
+                .message("Success")
+                .build();
+        return new ResponseEntity<>(apiResponse, HttpStatus.CREATED);
     }
 
     @PostMapping
@@ -49,6 +151,7 @@ public class ShopController {
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
+    @PreAuthorize("@customSecurityExpression.isShopOwner(#id, authentication)")
     @PatchMapping("/{id}")
     public ResponseEntity<?> updateShopHandler(
             @PathVariable String id,
@@ -61,6 +164,7 @@ public class ShopController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
+    @PreAuthorize("@customSecurityExpression.isShopOwner(#id, authentication)")
     @GetMapping("/{id}")
     public ResponseEntity<?> getShopByIdHandler(@PathVariable String id) throws IOException {
         APISuccessResponse<?> response = APISuccessResponse.builder()
@@ -70,6 +174,7 @@ public class ShopController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
+    @PreAuthorize("@customSecurityExpression.isShopOwner(#id, authentication)")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteShopByIdHandler(@PathVariable String id) throws NotFoundException {
         APISuccessResponse<?> response = APISuccessResponse.builder()
@@ -99,6 +204,7 @@ public class ShopController {
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
+    @PreAuthorize("@customSecurityExpression.isShopOwner(#id, authentication)")
     @GetMapping("/{id}/discounts")
     public ResponseEntity<?> getDiscountByShops(
             @PathVariable String id,
@@ -112,7 +218,7 @@ public class ShopController {
     }
 
     @GetMapping("/discounts/{id}")
-    public ResponseEntity<?> getDiscountDetailByShopHandler(@PathVariable String id) throws NotFoundException {
+    public ResponseEntity<?> getDiscountDetailByShopHandler(@PathVariable String id) throws NotFoundException, BadRequestException {
         APISuccessResponse<?> response = APISuccessResponse.builder()
                 .message("Success")
                 .data(this.discountService.getDiscountDetail(id))
@@ -130,7 +236,7 @@ public class ShopController {
     }
 
     @DeleteMapping("/discounts/{id}")
-    public ResponseEntity<?> deleteDiscountByShopHandler(@PathVariable String id) throws NotFoundException {
+    public ResponseEntity<?> deleteDiscountByShopHandler(@PathVariable String id) throws NotFoundException, BadRequestException {
         APISuccessResponse<?> response = APISuccessResponse.builder()
                 .message("Success")
                 .data(this.discountService.deleteDiscount(id))
@@ -147,6 +253,7 @@ public class ShopController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
+    @PreAuthorize("@customSecurityExpression.isShopOwner(#id, authentication)")
     @GetMapping("/{id}/orders")
     public ResponseEntity<?> getOrdersByShops(
             @PathVariable String id,
