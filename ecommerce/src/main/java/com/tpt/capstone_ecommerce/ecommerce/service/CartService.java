@@ -11,7 +11,7 @@ import java.util.List;
 public interface CartService {
     CartDetailResponse getCartDetail(String userId) throws NotFoundException;
     String addCartItemToCart(String cartId, CreateCartItemRequest request) throws NotFoundException, BadRequestException;
-    String removeCartItem(String cartItemId) throws NotFoundException;
+    String removeCartItem(String cartItemId) throws NotFoundException, BadRequestException;
     String updateCartItem(String cartItemId, int quantity) throws NotFoundException, BadRequestException;
-    String clearCart(String cartId, List<String> listOfCartItemIds) throws NotFoundException;
+    String clearCart(String cartId, List<String> listOfCartItemIds) throws NotFoundException, BadRequestException;
 }

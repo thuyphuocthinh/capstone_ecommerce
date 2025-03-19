@@ -69,10 +69,10 @@ public class WebSecurityConfig {
                                 "/api/v1/auth/google/verify-token"
                         ).permitAll()
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/v1/shops/**").hasAnyRole("SELLER", "ADMIN")
+                        .requestMatchers("/api/v1/shops/**").hasRole("SELLER")
                         .requestMatchers("/api/v1/**").hasAnyRole("CUSTOMER", "SELLER", "ADMIN")
-                        .requestMatchers("/error").permitAll() // 🟢 Cho phép các API này không cần auth
-                        .anyRequest().authenticated() // 🔒 Các API khác cần authentication
+                        .requestMatchers("/error").permitAll()
+                        .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2 // Thêm OAuth2
                         .redirectionEndpoint(redir ->
