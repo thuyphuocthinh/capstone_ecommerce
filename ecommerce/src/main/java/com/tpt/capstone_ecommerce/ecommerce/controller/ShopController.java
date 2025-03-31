@@ -36,12 +36,15 @@ public class ShopController {
 
     private final SkuService skuService;
 
-    public ShopController(ShopService shopService, DiscountService discountService, OrderService orderService, SpuService spuService, SkuService skuService) {
+    private final NotificationService notificationService;
+
+    public ShopController(ShopService shopService, DiscountService discountService, OrderService orderService, SpuService spuService, SkuService skuService, NotificationService notificationService) {
         this.shopService = shopService;
         this.discountService = discountService;
         this.orderService = orderService;
         this.spuService = spuService;
         this.skuService = skuService;
+        this.notificationService = notificationService;
     }
 
     @PostMapping("/spus")
@@ -251,6 +254,19 @@ public class ShopController {
                 .data(this.discountService.changeDiscountStatus(id, status.name()))
                 .build();
         return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @PreAuthorize("@customSecurityExpression.isShopOwner(#id, authentication)")
+    @GetMapping("/{id}/notifications")
+    public ResponseEntity<?> getNotificationsByShopHandler(
+            @PathVariable String id,
+            @RequestParam(name = "pageNumber", required = false, defaultValue = AppConstant.PAGE_NUMBER) Integer pageNumber,
+            @RequestParam(name = "pageSize", required = false, defaultValue = AppConstant.PAGE_SIZE) Integer pageSize
+    ) throws BadRequestException {
+        return new ResponseEntity<>(
+                this.notificationService.getListNotificationsByShopId(id, pageNumber, pageSize),
+                HttpStatus.OK
+        );
     }
 
     @PreAuthorize("@customSecurityExpression.isShopOwner(#id, authentication)")

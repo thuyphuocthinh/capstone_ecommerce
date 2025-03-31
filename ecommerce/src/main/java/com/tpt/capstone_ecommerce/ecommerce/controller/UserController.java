@@ -8,6 +8,7 @@ import com.tpt.capstone_ecommerce.ecommerce.dto.request.UpdateProfileRequest;
 import com.tpt.capstone_ecommerce.ecommerce.dto.request.UpdateUserAddressRequest;
 import com.tpt.capstone_ecommerce.ecommerce.dto.response.APISuccessResponse;
 import com.tpt.capstone_ecommerce.ecommerce.exception.NotFoundException;
+import com.tpt.capstone_ecommerce.ecommerce.service.NotificationService;
 import com.tpt.capstone_ecommerce.ecommerce.service.OrderService;
 import com.tpt.capstone_ecommerce.ecommerce.service.UserService;
 import org.apache.coyote.BadRequestException;
@@ -23,9 +24,12 @@ public class UserController {
 
     private final OrderService orderService;
 
-    public UserController(UserService userService, OrderService orderService) {
+    private final NotificationService notificationService;
+
+    public UserController(UserService userService, OrderService orderService, NotificationService notificationService) {
         this.userService = userService;
         this.orderService = orderService;
+        this.notificationService = notificationService;
     }
 
     @GetMapping("/profile")
@@ -162,5 +166,15 @@ public class UserController {
                 .data(this.userService.changePassword(accessToken, changePasswordRequest))
                 .build();
         return new ResponseEntity<>(apiSuccessResponse, HttpStatus.OK);
+    }
+
+    @PreAuthorize("@customSecurityExpression.isOwner(#id, authentication)")
+    @GetMapping("/{id}/notifications")
+    public ResponseEntity<?> getNotificationsByUserHandler(
+            @PathVariable String id,
+            @RequestParam(name = "pageNumber", required = false, defaultValue = AppConstant.PAGE_NUMBER) Integer pageNumber,
+            @RequestParam(name = "pageSize", required = false, defaultValue = AppConstant.PAGE_SIZE) Integer pageSize
+    ) throws NotFoundException, BadRequestException {
+        return new ResponseEntity<>(this.notificationService.getListNotificationsByUserId(id, pageNumber, pageSize), HttpStatus.OK);
     }
 }

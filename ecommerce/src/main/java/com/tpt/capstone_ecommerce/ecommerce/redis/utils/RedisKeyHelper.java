@@ -1,4 +1,4 @@
-package com.tpt.capstone_ecommerce.ecommerce.utils;
+package com.tpt.capstone_ecommerce.ecommerce.redis.utils;
 
 import java.util.Objects;
 
