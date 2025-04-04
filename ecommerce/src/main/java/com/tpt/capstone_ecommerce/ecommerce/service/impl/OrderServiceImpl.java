@@ -3,12 +3,12 @@ package com.tpt.capstone_ecommerce.ecommerce.service.impl;
 import com.tpt.capstone_ecommerce.ecommerce.constant.*;
 import com.tpt.capstone_ecommerce.ecommerce.dto.request.CheckoutOrderRequest;
 import com.tpt.capstone_ecommerce.ecommerce.dto.request.OrderDiscount;
-import com.tpt.capstone_ecommerce.ecommerce.dto.request.PaymentRequest;
 import com.tpt.capstone_ecommerce.ecommerce.dto.request.PlaceOrderRequest;
 import com.tpt.capstone_ecommerce.ecommerce.dto.response.*;
 import com.tpt.capstone_ecommerce.ecommerce.entity.*;
 import com.tpt.capstone_ecommerce.ecommerce.enums.*;
 import com.tpt.capstone_ecommerce.ecommerce.exception.NotFoundException;
+import com.tpt.capstone_ecommerce.ecommerce.redis.repository.OrderStreamPublisher;
 import com.tpt.capstone_ecommerce.ecommerce.repository.*;
 import com.tpt.capstone_ecommerce.ecommerce.service.CartService;
 import com.tpt.capstone_ecommerce.ecommerce.service.OrderService;
@@ -20,10 +20,8 @@ import org.apache.coyote.BadRequestException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -46,7 +44,7 @@ public class OrderServiceImpl implements OrderService {
 
     private final UserRepository userRepository;
 
-    private final CartService cartService;
+    private final OrderStreamPublisher orderStreamPublisher;
 
     private final PaymentService paymentService;
 
@@ -54,7 +52,7 @@ public class OrderServiceImpl implements OrderService {
 
     private final ShopRepository shopRepository;
 
-    public OrderServiceImpl(CartItemRepository cartItemRepository, OrderRepository orderRepository, OrderItemRepository orderItemRepository, SkuRepository skuRepository, AddressRepository addressRepository, DiscountRepository discountRepository, UserRepository userRepository, CartService cartService, PaymentService paymentService, PaymentRepository paymentRepository, ShopRepository shopRepository) {
+    public OrderServiceImpl(CartItemRepository cartItemRepository, OrderRepository orderRepository, OrderItemRepository orderItemRepository, SkuRepository skuRepository, AddressRepository addressRepository, DiscountRepository discountRepository, UserRepository userRepository, OrderStreamPublisher orderStreamPublisher, PaymentService paymentService, PaymentRepository paymentRepository, ShopRepository shopRepository) {
         this.cartItemRepository = cartItemRepository;
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
@@ -62,7 +60,7 @@ public class OrderServiceImpl implements OrderService {
         this.addressRepository = addressRepository;
         this.discountRepository = discountRepository;
         this.userRepository = userRepository;
-        this.cartService = cartService;
+        this.orderStreamPublisher = orderStreamPublisher;
         this.paymentService = paymentService;
         this.paymentRepository = paymentRepository;
         this.shopRepository = shopRepository;
@@ -230,16 +228,13 @@ public class OrderServiceImpl implements OrderService {
             throw new BadRequestException(PaymenErrorConstant.INVALID_PAYMENT_METHOD);
         }
 
-        PAYMENT_THIRD_PARTIES paymentThirdPartyEnum;
         try {
-            paymentThirdPartyEnum = PAYMENT_THIRD_PARTIES.valueOf(paymentThirdParty);
+            PAYMENT_THIRD_PARTIES.valueOf(paymentThirdParty);
         } catch (IllegalArgumentException e) {
             throw new BadRequestException(PaymenErrorConstant.INVALID_PAYMENT_THIRD_PARTY);
         }
 
-
         // Save order
-        // **1. Lưu Order trước**
         Order order = Order.builder()
                 .totalPrice(totalPrice)
                 .finalTotalPrice(finalPrice)
@@ -254,32 +249,20 @@ public class OrderServiceImpl implements OrderService {
         Order savedOrder = orderRepository.save(order);
         log.info("after saving order");
 
-        // **2. Gán Order vào từng OrderItem**
         for (OrderItem orderItem : orderItemsList) {
             orderItem.setOrder(savedOrder);
         }
 
-        // **3. Lưu danh sách OrderItems vào DB**
         savedOrder.setOrderItems(orderItemsList);
         savedOrder = orderRepository.save(order);
 
-        // clear cart
-        this.cartService.clearCart(findUser.getCart().getId(), placeOrderRequest.getOrderItemIds());
-
-        // Payment process
-        PaymentResponse paymentResponse = null;
-        if(paymentMethodEnum.equals(PAYMENT_METHOD.CASH)) {
-            this.paymentService.createPaymentCash(order);
-        } else {
-            paymentResponse = this.paymentService.createPayment(
-                    new PaymentRequest(BigDecimal.valueOf(totalPrice), CURRENCY.VND.name(), ipAddress), savedOrder, paymentThirdParty
-            );
-        }
+        // stream for cart, payment, email
+        this.orderStreamPublisher.publishOrderSuccess(savedOrder, orderItemIds, ipAddress, paymentThirdParty);
+        // pub-sub for notification
 
         return PlaceOrderResponse.builder()
                 .orderId(savedOrder.getId())
                 .orderStatus(savedOrder.getStatus().name())
-                .paymentRedirectUrl(paymentMethodEnum.equals(PAYMENT_METHOD.BANKING) ? paymentResponse.getRedirectUrl() : null)
                 .isPaidByCash(paymentMethodEnum.equals(PAYMENT_METHOD.CASH))
                 .build();
     }
@@ -342,7 +325,11 @@ public class OrderServiceImpl implements OrderService {
 
         findOrder.setStatus(ORDER_STATUS.CANCELLED);
         List<OrderItem> orderItems = findOrder.getOrderItems();
-        orderItems.forEach(orderItem -> orderItem.setStatus(ORDER_ITEM_STATUS.CANCELLED));
+        List<String> shopIds = new ArrayList<>();
+        orderItems.forEach(orderItem -> {
+            orderItem.setStatus(ORDER_ITEM_STATUS.CANCELLED);
+            shopIds.add(orderItem.getShop().getId());
+        });
         orderRepository.save(findOrder);
 
         for (OrderItem orderItem : orderItems) {
@@ -350,6 +337,8 @@ public class OrderServiceImpl implements OrderService {
             sku.setQuantity(sku.getQuantity() + orderItem.getQuantity());
             skuRepository.save(sku);
         }
+
+        this.orderStreamPublisher.publishOrderFailed(orderId, shopIds);
 
         return "Success";
     }
