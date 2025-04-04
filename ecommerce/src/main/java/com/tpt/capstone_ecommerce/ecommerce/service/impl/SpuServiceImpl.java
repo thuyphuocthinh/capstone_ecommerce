@@ -13,12 +13,10 @@ import com.tpt.capstone_ecommerce.ecommerce.exception.NotFoundException;
 import com.tpt.capstone_ecommerce.ecommerce.repository.*;
 import com.tpt.capstone_ecommerce.ecommerce.service.SpuService;
 import com.tpt.capstone_ecommerce.ecommerce.service.UploadService;
-import com.tpt.capstone_ecommerce.ecommerce.utils.SecurityUtils;
 import com.tpt.capstone_ecommerce.ecommerce.utils.Slug;
 import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.*;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -59,12 +57,6 @@ public class SpuServiceImpl implements SpuService {
         MultipartFile file = createSpuRequest.getFile();
 
         Shop findShop = this.shopRepository.findById(shopId).orElseThrow(() -> new NotFoundException(ShopErrorConstant.SHOP_NOT_FOUND));
-
-        String currentUserId = SecurityUtils.getCurrentUserId();
-        if(!findShop.getOwner().getId().equals(currentUserId)) {
-            throw new BadRequestException(AuthConstantError.NOT_ALLOWED_TO_ACCESS_RESOURCE);
-        }
-
         Category findCategory = this.categoryRepository.findById(categoryId).orElseThrow(() -> new NotFoundException(CategoryErrorConstant.CATEGORY_NOT_FOUND));
         Brand findBrand = this.brandRepository.findById(brandId).orElseThrow(() -> new NotFoundException(BrandErrorConstant.BRAND_NOT_FOUND));
 
@@ -136,11 +128,6 @@ public class SpuServiceImpl implements SpuService {
 
         Spu findSpu = this.spuRepository.findById(id).orElseThrow(() -> new NotFoundException(SpuErrorConstant.SPU_NOT_FOUND));
 
-        String currentUserId = SecurityUtils.getCurrentUserId();
-        if(!findSpu.getShop().getOwner().getId().equals(currentUserId)) {
-            throw new BadRequestException(AuthConstantError.NOT_ALLOWED_TO_ACCESS_RESOURCE);
-        }
-
         if (name != null) {
             findSpu.setName(name.trim());
             findSpu.setSlug(Slug.toSlug(name));
@@ -184,29 +171,21 @@ public class SpuServiceImpl implements SpuService {
 
     @Override
     public APISuccessResponseWithMetadata<?> getListsSpuHomepage(Integer pageNumber, Integer pageSize) {
-        Pageable pageable = PageRequest.of(Math.max(0, pageNumber - 1), pageSize);
+        Pageable pageable = PageRequest.of(pageNumber, pageSize);
         Page<Spu> page = this.spuRepository.findAllByActiveStatus(pageable);
         return mapSpuWithPrice(page);
     }
 
     @Override
     public APISuccessResponseWithMetadata<?> getListsSpuDashboard(Integer pageNumber, Integer pageSize) {
-        Pageable pageable = PageRequest.of(Math.max(0, pageNumber - 1), pageSize);
+        Pageable pageable = PageRequest.of(pageNumber, pageSize);
         Page<Spu> page = this.spuRepository.findAllByUndeletedStatus(pageable);
         return mapSpuWithoutPrice(page);
     }
 
     @Override
-    public APISuccessResponseWithMetadata<?> getListsSpuByShop(String shopId, Integer pageNumber, Integer pageSize) throws BadRequestException {
-        Shop findShop = this.shopRepository.findById(shopId)
-                .orElseThrow(() -> new NotFoundException(ShopErrorConstant.SHOP_NOT_FOUND));
-
-        String currentUserId = SecurityUtils.getCurrentUserId();
-        if(!findShop.getOwner().getId().equals(currentUserId)) {
-            throw new BadRequestException(AuthConstantError.NOT_ALLOWED_TO_ACCESS_RESOURCE);
-        }
-
-        Pageable pageable = PageRequest.of(Math.max(0, pageNumber - 1), pageSize);
+    public APISuccessResponseWithMetadata<?> getListsSpuByShop(String shopId, Integer pageNumber, Integer pageSize) {
+        Pageable pageable = PageRequest.of(pageNumber, pageSize);
         Page<Spu> page = this.spuRepository.findAllByShopId(shopId, pageable);
         return mapSpuWithoutPrice(page);
     }
@@ -215,7 +194,7 @@ public class SpuServiceImpl implements SpuService {
     public APISuccessResponseWithMetadata<?> getListsSpuByBrand(String brandId, Integer pageNumber, Integer pageSize) throws NotFoundException {
         Brand findBrand = this.brandRepository.findById(brandId).orElseThrow(() -> new NotFoundException(BrandErrorConstant.BRAND_NOT_FOUND));
 
-        Pageable pageable = PageRequest.of(Math.max(0, pageNumber - 1), pageSize);
+        Pageable pageable = PageRequest.of(pageNumber, pageSize);
         Page<Spu> page = this.spuRepository.findAllByBrandId(brandId, pageable);
         return mapSpuWithPrice(page);
     }
@@ -255,11 +234,6 @@ public class SpuServiceImpl implements SpuService {
     public String deleteSpu(String id, boolean isHard) throws NotFoundException, BadRequestException {
         Spu findSpu = this.spuRepository.findById(id).orElseThrow(() -> new NotFoundException(SpuErrorConstant.SPU_NOT_FOUND));
 
-        String currentUserId = SecurityUtils.getCurrentUserId();
-        if(!findSpu.getShop().getOwner().getId().equals(currentUserId)) {
-            throw new BadRequestException(AuthConstantError.NOT_ALLOWED_TO_ACCESS_RESOURCE);
-        }
-
         if(isHard) {
             this.spuRepository.delete(findSpu);
         } else {
@@ -276,11 +250,6 @@ public class SpuServiceImpl implements SpuService {
     @Override
     public SpuDetailResponse changeSpuStatus(String id, String status) throws NotFoundException, BadRequestException {
         Spu findSpu = this.spuRepository.findById(id).orElseThrow(() -> new NotFoundException(SpuErrorConstant.SPU_NOT_FOUND));
-
-        String currentUserId = SecurityUtils.getCurrentUserId();
-        if(!findSpu.getShop().getOwner().getId().equals(currentUserId)) {
-            throw new BadRequestException(AuthConstantError.NOT_ALLOWED_TO_ACCESS_RESOURCE);
-        }
 
         if(findSpu.getStatus() == SPU_STATUS.valueOf(status)) {
             throw new BadRequestException(SpuErrorConstant.INVALID_STATUS);
@@ -336,7 +305,7 @@ public class SpuServiceImpl implements SpuService {
             }
         }
 
-        Pageable pageable = PageRequest.of(Math.max(0, pageNumber - 1), pageSize);
+        Pageable pageable = PageRequest.of(pageNumber, pageSize);
 
         Page<SpuDetailResponse> page;
         if(sortDirection.equalsIgnoreCase(AppConstant.SORT_DIRECTION_ASC)) {

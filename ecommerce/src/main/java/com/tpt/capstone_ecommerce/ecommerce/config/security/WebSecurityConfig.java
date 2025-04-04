@@ -7,7 +7,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -23,7 +22,7 @@ import java.util.List;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity(prePostEnabled = true, securedEnabled = true, jsr250Enabled = true)
+@EnableGlobalMethodSecurity(prePostEnabled = true)
 public class WebSecurityConfig {
     private final CustomAuthenticationEntryPoint authenticationEntryPoint;
 
@@ -68,11 +67,8 @@ public class WebSecurityConfig {
                                 "/api/v1/auth/refresh-token",
                                 "/api/v1/auth/google/verify-token"
                         ).permitAll()
-                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/v1/shops/**").hasRole("SELLER")
-                        .requestMatchers("/api/v1/**").hasAnyRole("CUSTOMER", "SELLER", "ADMIN")
-                        .requestMatchers("/error").permitAll()
-                        .anyRequest().authenticated()
+                        .requestMatchers("/error").permitAll() // 🟢 Cho phép các API này không cần auth
+                        .anyRequest().authenticated() // 🔒 Các API khác cần authentication
                 )
                 .oauth2Login(oauth2 -> oauth2 // Thêm OAuth2
                         .redirectionEndpoint(redir ->

@@ -16,7 +16,7 @@ public interface SpuService {
     SpuDetailResponse updateSpu(String id, UpdateSpuRequest request) throws NotFoundException, IOException;
     APISuccessResponseWithMetadata<?> getListsSpuHomepage(Integer pageNumber, Integer pageSize);
     APISuccessResponseWithMetadata<?> getListsSpuDashboard(Integer pageNumber, Integer pageSize);
-    APISuccessResponseWithMetadata<?> getListsSpuByShop(String shopId, Integer pageNumber, Integer pageSize) throws BadRequestException;
+    APISuccessResponseWithMetadata<?> getListsSpuByShop(String shopId, Integer pageNumber, Integer pageSize);
     APISuccessResponseWithMetadata<?> getListsSpuByBrand(String brandId, Integer pageNumber, Integer pageSize) throws NotFoundException;
     APISuccessResponseWithMetadata<?> getListsSpuByCategory(String categoryId, Integer pageNumber, Integer pageSize) throws NotFoundException;
     String deleteSpu(String id, boolean isHard) throws NotFoundException, BadRequestException;
