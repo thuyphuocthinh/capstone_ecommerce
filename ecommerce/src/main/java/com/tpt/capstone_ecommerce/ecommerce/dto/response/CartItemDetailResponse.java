@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 public class CartItemDetailResponse {
     private String id;
     private String skuId;
+    private String shopId;
     private String skuName;
     private String skuImageUrl;
     private int quantity;
