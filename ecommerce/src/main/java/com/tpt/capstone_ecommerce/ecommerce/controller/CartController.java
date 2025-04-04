@@ -7,7 +7,6 @@ import jakarta.validation.Valid;
 import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -28,7 +27,7 @@ public class CartController {
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
-    @PreAuthorize("@customSecurityExpression.isOwner(#id, authentication)")
+
     @GetMapping("/users/{id}")
     public ResponseEntity<?> getCartDetailHandler(@PathVariable String id) {
         APISuccessResponse<Object> response = APISuccessResponse.builder()
@@ -48,7 +47,7 @@ public class CartController {
     }
 
     @DeleteMapping("/cart-items/{id}")
-    public ResponseEntity<?> deleteCartItemHandler(@PathVariable String id) throws BadRequestException {
+    public ResponseEntity<?> deleteCartItemHandler(@PathVariable String id) {
         APISuccessResponse<Object> response = APISuccessResponse.builder()
                 .message("Success")
                 .data(this.cartService.removeCartItem(id))

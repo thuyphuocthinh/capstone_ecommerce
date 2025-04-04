@@ -8,13 +8,10 @@ import com.tpt.capstone_ecommerce.ecommerce.dto.request.UpdateProfileRequest;
 import com.tpt.capstone_ecommerce.ecommerce.dto.request.UpdateUserAddressRequest;
 import com.tpt.capstone_ecommerce.ecommerce.dto.response.APISuccessResponse;
 import com.tpt.capstone_ecommerce.ecommerce.exception.NotFoundException;
-import com.tpt.capstone_ecommerce.ecommerce.service.NotificationService;
-import com.tpt.capstone_ecommerce.ecommerce.service.OrderService;
 import com.tpt.capstone_ecommerce.ecommerce.service.UserService;
 import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -22,14 +19,8 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
     private final UserService userService;
 
-    private final OrderService orderService;
-
-    private final NotificationService notificationService;
-
-    public UserController(UserService userService, OrderService orderService, NotificationService notificationService) {
+    public UserController(UserService userService) {
         this.userService = userService;
-        this.orderService = orderService;
-        this.notificationService = notificationService;
     }
 
     @GetMapping("/profile")
@@ -45,7 +36,6 @@ public class UserController {
         return new ResponseEntity<>(apiSuccessResponse, HttpStatus.OK);
     }
 
-    @PreAuthorize("@customSecurityExpression.isOwner(#id, authentication)")
     @GetMapping("/{id}/orders")
     public ResponseEntity<?> getOrdersByUserHandler(
             @PathVariable String id,
@@ -55,31 +45,6 @@ public class UserController {
         return new ResponseEntity<>(this.userService.getOrdersByUser(id, pageNumber, pageSize), HttpStatus.OK);
     }
 
-    @GetMapping("/orders/{id}")
-    public ResponseEntity<?> getOrderDetailByUserHandler(
-            @PathVariable String id
-    ) throws NotFoundException, BadRequestException {
-        APISuccessResponse<?> apiSuccessResponse = APISuccessResponse.builder()
-                .data(this.orderService.getOrderDetail(id))
-                .message("Success")
-                .build();
-
-        return new ResponseEntity<>(apiSuccessResponse, HttpStatus.OK);
-    }
-
-    @PatchMapping("/orders/{id}/cancel-order")
-    public ResponseEntity<?> cancelOrderByUserHandler(
-            @PathVariable String id
-    ) throws NotFoundException, BadRequestException {
-        APISuccessResponse<?> apiSuccessResponse = APISuccessResponse.builder()
-                .data(this.orderService.cancelOrder(id))
-                .message("Success")
-                .build();
-
-        return new ResponseEntity<>(apiSuccessResponse, HttpStatus.OK);
-    }
-
-    @PreAuthorize("@customSecurityExpression.isOwner(#id, authentication)")
     @GetMapping("/{id}/addresses")
     public ResponseEntity<?> getAddressesByUserHandler(
             @PathVariable String id,
@@ -89,12 +54,11 @@ public class UserController {
         return new ResponseEntity<>(this.userService.getAddressesByUser(id, pageNumber, pageSize), HttpStatus.OK);
     }
 
-    @PreAuthorize("@customSecurityExpression.isOwner(#id, authentication)")
     @PostMapping("/{id}/addresses")
     public ResponseEntity<?> createUserAddressHandler(
             @PathVariable String id,
             @RequestBody CreateUserAddressRequest createUserAddressRequest
-    ) throws NotFoundException, BadRequestException {
+    ) throws NotFoundException {
         APISuccessResponse<Object> apiSuccessResponse = APISuccessResponse
                 .builder()
                 .message("Success")
@@ -166,15 +130,5 @@ public class UserController {
                 .data(this.userService.changePassword(accessToken, changePasswordRequest))
                 .build();
         return new ResponseEntity<>(apiSuccessResponse, HttpStatus.OK);
-    }
-
-    @PreAuthorize("@customSecurityExpression.isOwner(#id, authentication)")
-    @GetMapping("/{id}/notifications")
-    public ResponseEntity<?> getNotificationsByUserHandler(
-            @PathVariable String id,
-            @RequestParam(name = "pageNumber", required = false, defaultValue = AppConstant.PAGE_NUMBER) Integer pageNumber,
-            @RequestParam(name = "pageSize", required = false, defaultValue = AppConstant.PAGE_SIZE) Integer pageSize
-    ) throws NotFoundException, BadRequestException {
-        return new ResponseEntity<>(this.notificationService.getListNotificationsByUserId(id, pageNumber, pageSize), HttpStatus.OK);
     }
 }

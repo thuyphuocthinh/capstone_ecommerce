@@ -43,7 +43,7 @@ public class Address {
     // private boolean isDefault = false;
 
     // location
-    @ManyToOne(fetch = FetchType.EAGER)
+    @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "location_id", nullable = false)
     private Location location;
 

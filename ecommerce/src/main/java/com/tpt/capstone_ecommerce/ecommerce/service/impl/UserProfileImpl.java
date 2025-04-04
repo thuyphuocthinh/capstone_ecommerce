@@ -2,8 +2,6 @@ package com.tpt.capstone_ecommerce.ecommerce.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tpt.capstone_ecommerce.ecommerce.auth.jwt.JwtProvider;
-import com.tpt.capstone_ecommerce.ecommerce.constant.AddressErrorConstant;
-import com.tpt.capstone_ecommerce.ecommerce.constant.LocationErrorConstant;
 import com.tpt.capstone_ecommerce.ecommerce.constant.UserErrorConstant;
 import com.tpt.capstone_ecommerce.ecommerce.dto.request.ChangePasswordRequest;
 import com.tpt.capstone_ecommerce.ecommerce.dto.request.CreateUserAddressRequest;
@@ -26,7 +24,6 @@ import org.apache.coyote.BadRequestException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -118,7 +115,7 @@ public class UserProfileImpl implements UserService {
 
     @Override
     public APISuccessResponseWithMetadata<?> getOrdersByUser(String userId, Integer pageNumber, Integer pageSize) throws NotFoundException {
-        User user = this.userRepository.findById(userId).orElseThrow(() -> new NotFoundException(UserErrorConstant.USER_NOT_FOUND));
+        User user = this.userRepository.findById(userId).orElseThrow(() -> new NotFoundException("User not found"));
 
         Pageable page = PageRequest.of(Math.max(0, pageNumber - 1), pageSize);
         Page<Order> orderPage = this.orderRepository.findAllByUser(user, page);
@@ -178,12 +175,9 @@ public class UserProfileImpl implements UserService {
     }
 
     @Override
-    public String createUserAddress(String userId, CreateUserAddressRequest createUserAddressRequest) throws NotFoundException, BadRequestException {
-        User user = this.userRepository.findById(userId).orElseThrow(() -> new NotFoundException(AddressErrorConstant.ADDRESS_NOT_FOUND));
-        Location location = this.locationRepository.findById(createUserAddressRequest.getLocationId()).orElseThrow(() -> new NotFoundException(LocationErrorConstant.LOCATION_NOT_FOUND));
-        if (this.addressRepository.findByPhone(createUserAddressRequest.getPhone()).isPresent()) {
-            throw new BadRequestException(AddressErrorConstant.ADDRESS_WITH_PHONE_EXISTS);
-        }
+    public String createUserAddress(String userId, CreateUserAddressRequest createUserAddressRequest) throws NotFoundException {
+        User user = this.userRepository.findById(userId).orElseThrow(() -> new NotFoundException("User not found"));
+        Location location = this.locationRepository.findById(createUserAddressRequest.getLocationId()).orElseThrow(() -> new NotFoundException("Location not found"));
 
         Address newAddress = new Address();
         newAddress.setUser(user);
@@ -198,9 +192,9 @@ public class UserProfileImpl implements UserService {
 
     @Override
     public String updateUserAddress(String addressId, UpdateUserAddressRequest updateUserAddressRequest) throws NotFoundException  {
-        Address address = this.addressRepository.findById(addressId).orElseThrow(() -> new NotFoundException(AddressErrorConstant.ADDRESS_NOT_FOUND));
+        Address address = this.addressRepository.findById(addressId).orElseThrow(() -> new NotFoundException("Address not found"));
         if(updateUserAddressRequest.getLocationId() != null) {
-            Location location = this.locationRepository.findById(updateUserAddressRequest.getLocationId()).orElseThrow(() -> new NotFoundException(LocationErrorConstant.LOCATION_NOT_FOUND));
+            Location location = this.locationRepository.findById(updateUserAddressRequest.getLocationId()).orElseThrow(() -> new NotFoundException("Location not found"));
             address.setLocation(location);
         }
 
@@ -223,14 +217,14 @@ public class UserProfileImpl implements UserService {
 
     @Override
     public String deleteUserAddress(String addressId) throws NotFoundException {
-        Address address = this.addressRepository.findById(addressId).orElseThrow(() -> new NotFoundException(AddressErrorConstant.ADDRESS_NOT_FOUND));
+        Address address = this.addressRepository.findById(addressId).orElseThrow(() -> new NotFoundException("Address not found"));
         this.addressRepository.delete(address);
         return "Success";
     }
 
     @Override
     public UserAddressDetailResponse getUserAddressDetail(String addressId) throws NotFoundException {
-        Address address = this.addressRepository.findById(addressId).orElseThrow(() -> new NotFoundException(AddressErrorConstant.ADDRESS_NOT_FOUND));
+        Address address = this.addressRepository.findById(addressId).orElseThrow(() -> new NotFoundException("Address not found"));
 
         List<String> listLocationIds = this.locationService.getLocationAllIds(address.getLocation().getId());
 

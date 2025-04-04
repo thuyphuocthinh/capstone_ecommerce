@@ -30,7 +30,7 @@ public class Shop {
     @Column(columnDefinition = "VARCHAR(36)", updatable = false, nullable = false)
     private String id;
 
-    @Column(nullable = false, name = "name")
+    @Column(nullable = false, name = "first_name")
     @NotBlank(message = "Shop name cannot be blank")
     @Size(min = 1, max = 255, message = "Shop name length is invalid")
     private String name;

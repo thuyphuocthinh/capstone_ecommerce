@@ -1,6 +1,5 @@
 package com.tpt.capstone_ecommerce.ecommerce.service.impl;
 
-import com.tpt.capstone_ecommerce.ecommerce.constant.AuthConstantError;
 import com.tpt.capstone_ecommerce.ecommerce.constant.DiscountErrorConstant;
 import com.tpt.capstone_ecommerce.ecommerce.constant.UserErrorConstant;
 import com.tpt.capstone_ecommerce.ecommerce.dto.request.CreateDiscountRequest;
@@ -17,14 +16,12 @@ import com.tpt.capstone_ecommerce.ecommerce.exception.NotFoundException;
 import com.tpt.capstone_ecommerce.ecommerce.repository.DiscountRepository;
 import com.tpt.capstone_ecommerce.ecommerce.repository.UserRepository;
 import com.tpt.capstone_ecommerce.ecommerce.service.DiscountService;
-import com.tpt.capstone_ecommerce.ecommerce.utils.SecurityUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.BadRequestException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -90,13 +87,8 @@ public class DiscountServiceImpl implements DiscountService {
     }
 
     @Override
-    public DiscountDetailResponse getDiscountDetail(String discountId) throws NotFoundException, BadRequestException {
+    public DiscountDetailResponse getDiscountDetail(String discountId) throws NotFoundException {
         Discount findDiscount = this.discountRepository.findById(discountId).orElseThrow(() -> new NotFoundException(DiscountErrorConstant.DISCOUNT_NOT_FOUND));
-
-        String currentUserId = SecurityUtils.getCurrentUserId();
-        if(!currentUserId.equals(findDiscount.getCreator().getId())) {
-            throw new BadRequestException(AuthConstantError.NOT_ALLOWED_TO_ACCESS_RESOURCE);
-        }
 
         return DiscountDetailResponse.builder()
                 .id(findDiscount.getId())
@@ -116,11 +108,6 @@ public class DiscountServiceImpl implements DiscountService {
     @Override
     public DiscountDetailResponse updateDiscount(String discountId, UpdateDiscountRequest request) throws NotFoundException, BadRequestException {
         Discount findDiscount = this.discountRepository.findById(discountId).orElseThrow(() -> new NotFoundException(DiscountErrorConstant.DISCOUNT_NOT_FOUND));
-
-        String currentUserId = SecurityUtils.getCurrentUserId();
-        if(!currentUserId.equals(findDiscount.getCreator().getId())) {
-            throw new BadRequestException(AuthConstantError.NOT_ALLOWED_TO_ACCESS_RESOURCE);
-        }
 
         String name = request.getName();
         String description = request.getDescription();
@@ -194,14 +181,8 @@ public class DiscountServiceImpl implements DiscountService {
     }
 
     @Override
-    public String deleteDiscount(String discountId) throws NotFoundException, BadRequestException {
+    public String deleteDiscount(String discountId) throws NotFoundException {
         Discount findDiscount = this.discountRepository.findById(discountId).orElseThrow(() -> new NotFoundException(DiscountErrorConstant.DISCOUNT_NOT_FOUND));
-
-        String currentUserId = SecurityUtils.getCurrentUserId();
-        if(!currentUserId.equals(findDiscount.getCreator().getId())) {
-            throw new BadRequestException(AuthConstantError.NOT_ALLOWED_TO_ACCESS_RESOURCE);
-        }
-
         this.discountRepository.delete(findDiscount);
         return "Success";
     }
@@ -209,12 +190,8 @@ public class DiscountServiceImpl implements DiscountService {
     @Override
     public APISuccessResponseWithMetadata<?> getDiscountsByCreator(String creatorId, Integer pageNumber, Integer pageSize) throws NotFoundException, BadRequestException {
         Pageable pageRequest = PageRequest.of(pageNumber, pageSize);
-        User findCreator = this.userRepository.findById(creatorId).orElseThrow(() -> new NotFoundException(UserErrorConstant.USER_NOT_FOUND));
 
-        String currentUserId = SecurityUtils.getCurrentUserId();
-        if(!currentUserId.equals(findCreator.getId())) {
-            throw new BadRequestException(AuthConstantError.NOT_ALLOWED_TO_ACCESS_RESOURCE);
-        }
+        User findCreator = this.userRepository.findById(creatorId).orElseThrow(() -> new NotFoundException(UserErrorConstant.USER_NOT_FOUND));
 
         Page<Discount> page = this.discountRepository.findAllByCreator(findCreator, pageRequest);
         return getApiSuccessResponseWithMetadata(page);
@@ -236,11 +213,6 @@ public class DiscountServiceImpl implements DiscountService {
             throw new BadRequestException(DiscountErrorConstant.DISCOUNT_WITH_STATUS_ALREADY_EXISTS);
         }
 
-        String currentUserId = SecurityUtils.getCurrentUserId();
-        if(!currentUserId.equals(findDiscount.getCreator().getId())) {
-            throw new BadRequestException(AuthConstantError.NOT_ALLOWED_TO_ACCESS_RESOURCE);
-        }
-
         findDiscount.setStatus(DISCOUNT_STATUS.valueOf(status));
         this.discountRepository.save(findDiscount);
 
@@ -249,7 +221,7 @@ public class DiscountServiceImpl implements DiscountService {
 
     @Override
     public APISuccessResponseWithMetadata<?> getDiscountsByAmountAndShop(String shopId, Double amount, Integer pageNumber, Integer pageSize) throws NotFoundException, BadRequestException {
-        Pageable pageRequest = PageRequest.of(Math.max(0, pageNumber - 1), pageSize);
+        Pageable pageRequest = PageRequest.of(pageNumber, pageSize);
 
         Page<Discount> page = this.discountRepository.findAllByShopIdAndValue(shopId, amount, pageRequest);
         return getApiSuccessResponseWithMetadata(page);
@@ -257,7 +229,7 @@ public class DiscountServiceImpl implements DiscountService {
 
     @Override
     public APISuccessResponseWithMetadata<?> getGlobalDiscountsByAmount(Double amount, Integer pageNumber, Integer pageSize) throws NotFoundException, BadRequestException {
-        Pageable pageRequest = PageRequest.of(Math.max(0, pageNumber - 1), pageSize);
+        Pageable pageRequest = PageRequest.of(pageNumber, pageSize);
         Page<Discount> page = this.discountRepository.findAllGlobalDiscountsWithAmount(amount, pageRequest);
         return getApiSuccessResponseWithMetadata(page);
     }
