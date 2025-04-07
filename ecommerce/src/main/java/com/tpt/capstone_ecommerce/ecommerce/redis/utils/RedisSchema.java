@@ -52,4 +52,16 @@ public class RedisSchema {
     public static String getUserChannel() {
         return RedisKeyHelper.getKey("userChannel");
     }
+
+    public static String getCategoryKey(Integer pageNumber) {
+        return RedisKeyHelper.getKey("category:" + pageNumber);
+    }
+
+    public static String getCategoryKeyItem() {
+        return RedisKeyHelper.getKey("totalItems");
+    }
+
+    public static String getAccessTokenKey(String userId, String timestamp) {
+        return RedisKeyHelper.getKey("accessToken:" + userId + ":" + timestamp);
+    }
 }

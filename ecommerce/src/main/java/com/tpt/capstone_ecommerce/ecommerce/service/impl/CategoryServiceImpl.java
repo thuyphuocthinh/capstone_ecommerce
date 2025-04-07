@@ -7,6 +7,8 @@ import com.tpt.capstone_ecommerce.ecommerce.dto.response.*;
 import com.tpt.capstone_ecommerce.ecommerce.entity.Brand;
 import com.tpt.capstone_ecommerce.ecommerce.entity.Category;
 import com.tpt.capstone_ecommerce.ecommerce.exception.NotFoundException;
+import com.tpt.capstone_ecommerce.ecommerce.redis.repository.CacheCategory;
+import com.tpt.capstone_ecommerce.ecommerce.redis.utils.RedisSchema;
 import com.tpt.capstone_ecommerce.ecommerce.repository.CategoryRepository;
 import com.tpt.capstone_ecommerce.ecommerce.service.CategoryService;
 import com.tpt.capstone_ecommerce.ecommerce.service.UploadService;
@@ -32,9 +34,12 @@ public class CategoryServiceImpl implements CategoryService {
 
     private final UploadService uploadService;
 
-    public CategoryServiceImpl(CategoryRepository categoryRepository, @Qualifier("cloudinary")UploadService uploadService) {
+    private final CacheCategory cacheCategory;
+
+    public CategoryServiceImpl(CategoryRepository categoryRepository, @Qualifier("cloudinary")UploadService uploadService, CacheCategory cacheCategory) {
         this.categoryRepository = categoryRepository;
         this.uploadService = uploadService;
+        this.cacheCategory = cacheCategory;
     }
 
     @Override
@@ -57,6 +62,7 @@ public class CategoryServiceImpl implements CategoryService {
                     .build();
         });
 
+        this.cacheCategory.incrementTotalItems(RedisSchema.getCategoryKeyItem());
         return this.categoryRepository.save(findCategoryOrCreate).getId();
     }
 
@@ -118,38 +124,59 @@ public class CategoryServiceImpl implements CategoryService {
     public String deleteCategory(String id) throws NotFoundException {
         Category category = this.categoryRepository.findById(id).orElseThrow(() -> new NotFoundException(CategoryErrorConstant.CATEGORY_NOT_FOUND));
         this.categoryRepository.delete(category);
+        this.cacheCategory.decrementTotalItems(RedisSchema.getCategoryKeyItem());
         return "Success";
     }
 
     @Override
     public APISuccessResponseWithMetadata<?> getAllCategories(Integer pageNumber, Integer pageSize) throws NotFoundException {
-        Pageable page = PageRequest.of(Math.max(0, pageNumber - 1), pageSize);
-        Page<Category> categoryPage = this.categoryRepository.findAll(page);
+        String key = RedisSchema.getCategoryKey(pageNumber);
+        String totalItemsKey = RedisSchema.getCategoryKeyItem();
+        PaginationMetadata paginationMetadataReturn = new PaginationMetadata();
 
-        log.info("addresses res:::: {}", categoryPage);
+        List<CategoryDetailResponse> categoryDetailResponses = this.cacheCategory.getListCategories(key);
+        if (categoryDetailResponses.isEmpty()) {
+            Pageable page = PageRequest.of(Math.max(0, pageNumber - 1), pageSize);
+            Page<Category> categoryPage = this.categoryRepository.findAll(page);
 
-        List<Category> categories = categoryPage.getContent();
+            List<Category> categories = categoryPage.getContent();
 
-        List<CategoryDetailResponse> categoryDetailResponses = categories.stream().map(category -> CategoryDetailResponse.builder()
-                .id(category.getId())
-                .slug(category.getSlug())
-                .description(category.getDescription())
-                .name(category.getName())
-                .imageUrl(category.getImageUrl())
-                .parentId(category.getParentId())
-                .build()).toList();
+            categoryDetailResponses = categories.stream()
+                    .map(category -> CategoryDetailResponse.builder()
+                            .id(category.getId())
+                            .slug(category.getSlug())
+                            .description(category.getDescription())
+                            .name(category.getName())
+                            .imageUrl(category.getImageUrl())
+                            .parentId(category.getParentId())
+                            .build())
+                    .collect(Collectors.toList());
 
-        PaginationMetadata paginationMetadata = PaginationMetadata.builder()
-                .currentPage(categoryPage.getNumber() + 1)
-                .pageSize(categoryPage.getSize())
-                .totalPages(categoryPage.getTotalPages())
-                .totalItems((int)categoryPage.getTotalElements())
-                .build();
+            this.cacheCategory.saveListCategories(key, categoryDetailResponses);
 
+            paginationMetadataReturn = PaginationMetadata.builder()
+                    .currentPage(pageNumber)
+                    .pageSize(pageSize)
+                    .totalPages((int) Math.ceil((double) categoryPage.getTotalElements() / pageSize))
+                    .totalItems((int) categoryPage.getTotalElements())
+                    .build();
+
+        } else {
+            String totalItemsFromCache = this.cacheCategory.getTotalItems(totalItemsKey);
+            if (totalItemsFromCache != null) {
+                int totalItems = Integer.parseInt(totalItemsFromCache);
+                paginationMetadataReturn = PaginationMetadata.builder()
+                        .currentPage(pageNumber)
+                        .pageSize(pageSize)
+                        .totalPages((int) Math.ceil((double) totalItems / pageSize))
+                        .totalItems(totalItems)
+                        .build();
+            }
+        }
         return APISuccessResponseWithMetadata.builder()
                 .message("Success")
                 .data(categoryDetailResponses)
-                .metadata(paginationMetadata)
+                .metadata(paginationMetadataReturn)
                 .build();
     }
 
@@ -159,8 +186,6 @@ public class CategoryServiceImpl implements CategoryService {
 
         Pageable page = PageRequest.of(Math.max(0, pageNumber - 1), pageSize);
         Page<Category> categoryPage = this.categoryRepository.findAllByParentId(parentId, page);
-
-        log.info("addresses res:::: {}", categoryPage);
 
         List<Category> categories = categoryPage.getContent();
 
@@ -221,7 +246,6 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public List<CategoryNestedResponse> getNestedCategories() throws NotFoundException {
-
         // O(n^2) => oke in this case ?
         // Giam xuong O(n) => find All => map & filter
         List<Category> allCategories = this.categoryRepository.findAll();
