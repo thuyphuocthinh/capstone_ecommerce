@@ -1,6 +1,7 @@
 package com.tpt.capstone_ecommerce.ecommerce.config.security;
 
 import com.tpt.capstone_ecommerce.ecommerce.auth.jwt.JwtFilter;
+import com.tpt.capstone_ecommerce.ecommerce.service.impl.CustomUserDetailsService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,8 +28,11 @@ import java.util.List;
 public class WebSecurityConfig {
     private final CustomAuthenticationEntryPoint authenticationEntryPoint;
 
-    public WebSecurityConfig(CustomAuthenticationEntryPoint authenticationEntryPoint) {
+    private final CustomUserDetailsService userDetailsService;
+
+    public WebSecurityConfig(CustomAuthenticationEntryPoint authenticationEntryPoint, CustomUserDetailsService userDetailsService) {
         this.authenticationEntryPoint = authenticationEntryPoint;
+        this.userDetailsService = userDetailsService;
     }
 
     @Bean
@@ -45,12 +49,13 @@ public class WebSecurityConfig {
 
     @Bean
     public JwtFilter jwtFilter() {
-        return new JwtFilter();
+        return new JwtFilter(userDetailsService);
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                .securityContext(context -> context.requireExplicitSave(false))
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(sessionManagement ->
@@ -72,6 +77,7 @@ public class WebSecurityConfig {
                         .requestMatchers("/api/v1/shops/**").hasRole("SELLER")
                         .requestMatchers("/api/v1/**").hasAnyRole("CUSTOMER", "SELLER", "ADMIN")
                         .requestMatchers("/error").permitAll()
+                        .requestMatchers("/ws/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2 // Thêm OAuth2
@@ -91,7 +97,7 @@ public class WebSecurityConfig {
             public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
                 CorsConfiguration config = new CorsConfiguration();
                 config.setAllowCredentials(true);
-                config.setAllowedOriginPatterns(List.of("http://localhost:5173"));
+                config.setAllowedOriginPatterns(List.of("http://localhost:5500"));
                 config.addAllowedHeader("*");
                 config.addAllowedMethod("*");
                 config.addExposedHeader("Authorization");

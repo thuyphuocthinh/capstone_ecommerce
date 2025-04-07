@@ -2,6 +2,8 @@ package com.tpt.capstone_ecommerce.ecommerce.auth.jwt;
 
 import com.tpt.capstone_ecommerce.ecommerce.constant.JwtConstant;
 import com.tpt.capstone_ecommerce.ecommerce.constant.UserErrorConstant;
+import com.tpt.capstone_ecommerce.ecommerce.entity.CustomUserDetails;
+import com.tpt.capstone_ecommerce.ecommerce.service.impl.CustomUserDetailsService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
@@ -20,6 +22,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -33,6 +36,12 @@ public class JwtFilter extends OncePerRequestFilter {
     private String jwtSecret;
 
     private static final Logger log = LoggerFactory.getLogger(JwtFilter.class);
+
+    private final CustomUserDetailsService customUserDetailsService;
+
+    public JwtFilter(CustomUserDetailsService customUserDetailsService) {
+        this.customUserDetailsService = customUserDetailsService;
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -51,10 +60,12 @@ public class JwtFilter extends OncePerRequestFilter {
                         .map(role -> new SimpleGrantedAuthority("ROLE_" + role)) // Thêm "ROLE_" vào trước role
                         .collect(Collectors.toList());
                 // CREATE AN AUTHENTICATION
-                Authentication auth = new UsernamePasswordAuthenticationToken(email, null, authorityList);
-                log.info("authorityList: {}", authorityList);
+                CustomUserDetails userDetails = (CustomUserDetails) customUserDetailsService.loadUserByUsername(email); // Tải từ DB nếu cần
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(userDetails, null, authorityList);
                 // SAVE AUTHENTICATION TO SECURITY CONTEXT
-                SecurityContextHolder.getContext().setAuthentication(auth);
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+                log.info("After set: {}", SecurityContextHolder.getContext().getAuthentication());
             } catch (BadCredentialsException ex) {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 response.setContentType("application/json");
