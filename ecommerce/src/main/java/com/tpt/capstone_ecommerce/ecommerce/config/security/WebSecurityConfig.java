@@ -1,6 +1,7 @@
 package com.tpt.capstone_ecommerce.ecommerce.config.security;
 
 import com.tpt.capstone_ecommerce.ecommerce.auth.jwt.JwtFilter;
+import com.tpt.capstone_ecommerce.ecommerce.service.impl.CustomUserDetailsService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,8 +28,11 @@ import java.util.List;
 public class WebSecurityConfig {
     private final CustomAuthenticationEntryPoint authenticationEntryPoint;
 
-    public WebSecurityConfig(CustomAuthenticationEntryPoint authenticationEntryPoint) {
+    private final CustomUserDetailsService userDetailsService;
+
+    public WebSecurityConfig(CustomAuthenticationEntryPoint authenticationEntryPoint, CustomUserDetailsService userDetailsService) {
         this.authenticationEntryPoint = authenticationEntryPoint;
+        this.userDetailsService = userDetailsService;
     }
 
     @Bean
@@ -45,12 +49,13 @@ public class WebSecurityConfig {
 
     @Bean
     public JwtFilter jwtFilter() {
-        return new JwtFilter();
+        return new JwtFilter(userDetailsService);
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                .securityContext(context -> context.requireExplicitSave(false))
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(sessionManagement ->

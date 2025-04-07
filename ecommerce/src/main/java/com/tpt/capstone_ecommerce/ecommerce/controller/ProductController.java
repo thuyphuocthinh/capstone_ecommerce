@@ -3,13 +3,11 @@ package com.tpt.capstone_ecommerce.ecommerce.controller;
 import com.tpt.capstone_ecommerce.ecommerce.constant.AppConstant;
 import com.tpt.capstone_ecommerce.ecommerce.constant.SkuErrorConstant;
 import com.tpt.capstone_ecommerce.ecommerce.constant.SpuErrorConstant;
-import com.tpt.capstone_ecommerce.ecommerce.dto.request.CreateSkuRequest;
-import com.tpt.capstone_ecommerce.ecommerce.dto.request.CreateSpuRequest;
-import com.tpt.capstone_ecommerce.ecommerce.dto.request.UpdateSkuRequest;
-import com.tpt.capstone_ecommerce.ecommerce.dto.request.UpdateSpuRequest;
+import com.tpt.capstone_ecommerce.ecommerce.dto.request.*;
 import com.tpt.capstone_ecommerce.ecommerce.dto.response.APISuccessResponse;
 import com.tpt.capstone_ecommerce.ecommerce.enums.SKU_STATUS;
 import com.tpt.capstone_ecommerce.ecommerce.enums.SPU_STATUS;
+import com.tpt.capstone_ecommerce.ecommerce.service.CommentService;
 import com.tpt.capstone_ecommerce.ecommerce.service.SkuService;
 import com.tpt.capstone_ecommerce.ecommerce.service.SpuService;
 import jakarta.validation.Valid;
@@ -28,12 +26,13 @@ public class ProductController {
 
     private final SkuService skuService;
 
-    public ProductController(SpuService spuService, SkuService skuService) {
+    private final CommentService commentService;
+
+    public ProductController(SpuService spuService, SkuService skuService, CommentService commentService) {
         this.spuService = spuService;
         this.skuService = skuService;
+        this.commentService = commentService;
     }
-
-
 
     @GetMapping("/spus/{id}")
     public ResponseEntity<?> getSpuDetailHandler(@PathVariable String id) throws BadRequestException {
@@ -107,5 +106,59 @@ public class ProductController {
                 .message("Success")
                 .build();
         return new ResponseEntity<>(apiResponse, HttpStatus.OK);
+    }
+
+    @PostMapping("/spus/{id}/comments")
+    public ResponseEntity<?> addCommentHandler(@PathVariable String id, @Valid @RequestBody CreateCommentRequest createCommentRequest) {
+        APISuccessResponse<?> apiSuccessResponse = APISuccessResponse.builder()
+                .data(this.commentService.createComment(id, createCommentRequest))
+                .message("Success")
+                .build();
+        return new ResponseEntity<>(apiSuccessResponse, HttpStatus.OK);
+    }
+
+    @PostMapping("/spus/comments/{id}/replies")
+    public ResponseEntity<?> replyCommentHandler(@PathVariable String id, @Valid @RequestBody CreateCommentRequest createCommentRequest) {
+        APISuccessResponse<?> apiSuccessResponse = APISuccessResponse.builder()
+                .data(this.commentService.replyComment(id, createCommentRequest))
+                .message("Success")
+                .build();
+        return new ResponseEntity<>(apiSuccessResponse, HttpStatus.OK);
+    }
+
+    @PatchMapping("/spus/comments/{id}")
+    public ResponseEntity<?> updateCommentHandler(@PathVariable String id, @Valid @RequestBody UpdateCommentRequest updateCommentRequest) throws BadRequestException {
+        APISuccessResponse<?> apiSuccessResponse = APISuccessResponse.builder()
+                .data(this.commentService.updateComment(id, updateCommentRequest))
+                .message("Success")
+                .build();
+        return new ResponseEntity<>(apiSuccessResponse, HttpStatus.OK);
+    }
+
+    @DeleteMapping("/spus/comments/{id}")
+    public ResponseEntity<?> deleteCommentHandler(@PathVariable String id) throws BadRequestException {
+        APISuccessResponse<?> apiSuccessResponse = APISuccessResponse.builder()
+                .data(this.commentService.deleteComment(id))
+                .message("Success")
+                .build();
+        return new ResponseEntity<>(apiSuccessResponse, HttpStatus.OK);
+    }
+
+    @GetMapping("/spus/{id}/comments")
+    public ResponseEntity<?> getCommentsBySpu(
+            @PathVariable String id,
+            @RequestParam(name = "pageNumber", required = false, defaultValue = AppConstant.PAGE_NUMBER) Integer pageNumber,
+            @RequestParam(name = "pageSize", required = false, defaultValue = AppConstant.PAGE_SIZE) Integer pageSize
+    ) {
+        return new ResponseEntity<>(this.commentService.getListOfCommentsBySpu(id, pageNumber, pageSize), HttpStatus.OK);
+    }
+
+    @GetMapping("/spus/comments/{id}/replies")
+    public ResponseEntity<?> getRepliesOfComment(
+            @PathVariable String id,
+            @RequestParam(name = "pageNumber", required = false, defaultValue = AppConstant.PAGE_NUMBER) Integer pageNumber,
+            @RequestParam(name = "pageSize", required = false, defaultValue = AppConstant.PAGE_SIZE) Integer pageSize
+    ) {
+        return new ResponseEntity<>(this.commentService.getRepliesOfComment(id, pageNumber, pageSize), HttpStatus.OK);
     }
 }
