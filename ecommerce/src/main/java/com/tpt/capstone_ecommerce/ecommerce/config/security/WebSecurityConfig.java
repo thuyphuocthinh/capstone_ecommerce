@@ -77,6 +77,7 @@ public class WebSecurityConfig {
                         .requestMatchers("/api/v1/shops/**").hasRole("SELLER")
                         .requestMatchers("/api/v1/**").hasAnyRole("CUSTOMER", "SELLER", "ADMIN")
                         .requestMatchers("/error").permitAll()
+                        .requestMatchers("/ws/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2 // Thêm OAuth2
@@ -96,7 +97,7 @@ public class WebSecurityConfig {
             public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
                 CorsConfiguration config = new CorsConfiguration();
                 config.setAllowCredentials(true);
-                config.setAllowedOriginPatterns(List.of("http://localhost:5173"));
+                config.setAllowedOriginPatterns(List.of("http://localhost:5500"));
                 config.addAllowedHeader("*");
                 config.addAllowedMethod("*");
                 config.addExposedHeader("Authorization");

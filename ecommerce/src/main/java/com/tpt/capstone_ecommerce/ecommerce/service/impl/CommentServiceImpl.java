@@ -1,22 +1,22 @@
 package com.tpt.capstone_ecommerce.ecommerce.service.impl;
 
-import com.tpt.capstone_ecommerce.ecommerce.constant.AuthConstantError;
-import com.tpt.capstone_ecommerce.ecommerce.constant.CommentErrorConstant;
-import com.tpt.capstone_ecommerce.ecommerce.constant.SpuErrorConstant;
-import com.tpt.capstone_ecommerce.ecommerce.constant.UserErrorConstant;
+import com.tpt.capstone_ecommerce.ecommerce.constant.*;
 import com.tpt.capstone_ecommerce.ecommerce.dto.request.CreateCommentRequest;
 import com.tpt.capstone_ecommerce.ecommerce.dto.request.UpdateCommentRequest;
 import com.tpt.capstone_ecommerce.ecommerce.dto.response.APISuccessResponseWithMetadata;
 import com.tpt.capstone_ecommerce.ecommerce.dto.response.CommentDetailResponse;
+import com.tpt.capstone_ecommerce.ecommerce.dto.response.NotificationDetailResponse;
 import com.tpt.capstone_ecommerce.ecommerce.dto.response.PaginationMetadata;
 import com.tpt.capstone_ecommerce.ecommerce.entity.Comment;
 import com.tpt.capstone_ecommerce.ecommerce.entity.Spu;
 import com.tpt.capstone_ecommerce.ecommerce.entity.User;
+import com.tpt.capstone_ecommerce.ecommerce.enums.NOTIFICATION_TYPE;
 import com.tpt.capstone_ecommerce.ecommerce.exception.NotFoundException;
 import com.tpt.capstone_ecommerce.ecommerce.repository.CommentRepository;
 import com.tpt.capstone_ecommerce.ecommerce.repository.SpuRepository;
 import com.tpt.capstone_ecommerce.ecommerce.repository.UserRepository;
 import com.tpt.capstone_ecommerce.ecommerce.service.CommentService;
+import com.tpt.capstone_ecommerce.ecommerce.service.NotificationService;
 import com.tpt.capstone_ecommerce.ecommerce.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
@@ -33,9 +33,10 @@ public class CommentServiceImpl implements CommentService {
     private final CommentRepository commentRepository;
     private final SpuRepository spuRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     @Override
-    public String createComment(String spuId, CreateCommentRequest request) throws NotFoundException {
+    public String createComment(String spuId, CreateCommentRequest request) throws NotFoundException, BadRequestException {
         Spu findSpu = this.spuRepository.findById(spuId)
                 .orElseThrow(() -> new NotFoundException(SpuErrorConstant.SPU_NOT_FOUND));
 
@@ -49,7 +50,10 @@ public class CommentServiceImpl implements CommentService {
                 .build();
 
         Comment savedComment = this.commentRepository.save(comment);
-        // realtime here
+
+        this.notificationService.addNewNotificationForShop(findSpu.getShop().getId(), spuId, NOTIFICATION_TYPE.NEW_REVIEW, request.getContent());
+        this.notificationService.addNewNotificationForUser(findUser.getId(), spuId, NOTIFICATION_TYPE.NEW_REVIEW, request.getContent());
+
         return savedComment.getId();
     }
 
@@ -84,7 +88,7 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public String replyComment(String commentParentId, CreateCommentRequest request) throws NotFoundException {
+    public String replyComment(String commentParentId, CreateCommentRequest request) throws NotFoundException, BadRequestException {
         Comment findComment = this.commentRepository.findById(commentParentId)
                 .orElseThrow(() -> new NotFoundException(CommentErrorConstant.COMMENT_NOT_FOUND));
 
@@ -99,6 +103,11 @@ public class CommentServiceImpl implements CommentService {
                 .build();
 
         Comment savedComment = this.commentRepository.save(comment);
+
+        Spu spu = findComment.getSpu();
+        this.notificationService.addNewNotificationForShop(spu.getShop().getId(), spu.getId(), NOTIFICATION_TYPE.NEW_REVIEW, request.getContent());
+        this.notificationService.addNewNotificationForUser(findUser.getId(), spu.getId(), NOTIFICATION_TYPE.NEW_REVIEW, request.getContent());
+
         return savedComment.getId();
     }
 

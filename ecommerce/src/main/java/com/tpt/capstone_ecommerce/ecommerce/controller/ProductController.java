@@ -109,7 +109,7 @@ public class ProductController {
     }
 
     @PostMapping("/spus/{id}/comments")
-    public ResponseEntity<?> addCommentHandler(@PathVariable String id, @Valid @RequestBody CreateCommentRequest createCommentRequest) {
+    public ResponseEntity<?> addCommentHandler(@PathVariable String id, @Valid @RequestBody CreateCommentRequest createCommentRequest) throws BadRequestException {
         APISuccessResponse<?> apiSuccessResponse = APISuccessResponse.builder()
                 .data(this.commentService.createComment(id, createCommentRequest))
                 .message("Success")
@@ -118,7 +118,7 @@ public class ProductController {
     }
 
     @PostMapping("/spus/comments/{id}/replies")
-    public ResponseEntity<?> replyCommentHandler(@PathVariable String id, @Valid @RequestBody CreateCommentRequest createCommentRequest) {
+    public ResponseEntity<?> replyCommentHandler(@PathVariable String id, @Valid @RequestBody CreateCommentRequest createCommentRequest) throws BadRequestException {
         APISuccessResponse<?> apiSuccessResponse = APISuccessResponse.builder()
                 .data(this.commentService.replyComment(id, createCommentRequest))
                 .message("Success")
