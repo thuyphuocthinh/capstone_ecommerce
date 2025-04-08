@@ -48,11 +48,12 @@ public class ShopConsumerService extends ConsumerService implements StreamConsum
                     String orderId = fields.get("orderId");
                     String shopIdsString = fields.get("shopIds");
                     String[] shopIds = shopIdsString.split(",");
+                    NOTIFICATION_TYPE type = NOTIFICATION_TYPE.valueOf(fields.get("notificationType"));
                     int count = 0;
                     for(String shopId: shopIds) {
                         Shop findShop = this.shopRepository.findById(shopId)
                                 .orElseThrow(() -> new NotFoundException(ShopErrorConstant.SHOP_NOT_FOUND));
-                        this.notificationService.addNewNotificationForShop(findShop.getId(), orderId, NOTIFICATION_TYPE.ORDER_CANCELED, NotificationConstant.ORDER_CANCELED);
+                        this.notificationService.addNewNotificationForShop(findShop.getId(), orderId, type, NotificationConstant.ORDER_CANCELED);
                         count++;
                     }
                     if(count == shopIds.length) {
