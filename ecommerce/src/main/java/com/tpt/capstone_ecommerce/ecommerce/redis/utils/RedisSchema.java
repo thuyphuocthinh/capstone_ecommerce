@@ -45,14 +45,6 @@ public class RedisSchema {
         return RedisKeyHelper.getKey("user:" + userId);
     }
 
-    public static String getShopChannel() {
-        return RedisKeyHelper.getKey("shopChannel");
-    }
-
-    public static String getUserChannel() {
-        return RedisKeyHelper.getKey("userChannel");
-    }
-
     public static String getCategoryKey(Integer pageNumber) {
         return RedisKeyHelper.getKey("category:" + pageNumber);
     }
@@ -61,7 +53,7 @@ public class RedisSchema {
         return RedisKeyHelper.getKey("totalItems");
     }
 
-    public static String getAccessTokenKey(String userId, String timestamp) {
-        return RedisKeyHelper.getKey("accessToken:" + userId + ":" + timestamp);
-    }
+    // public static String getAccessTokenKey(String userId, String timestamp) {
+    //    return RedisKeyHelper.getKey("accessToken:" + userId + ":" + timestamp);
+    //}
 }

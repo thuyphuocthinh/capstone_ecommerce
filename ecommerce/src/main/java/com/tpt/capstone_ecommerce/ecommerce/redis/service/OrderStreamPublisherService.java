@@ -3,6 +3,7 @@ package com.tpt.capstone_ecommerce.ecommerce.redis.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tpt.capstone_ecommerce.ecommerce.entity.Order;
+import com.tpt.capstone_ecommerce.ecommerce.enums.NOTIFICATION_TYPE;
 import com.tpt.capstone_ecommerce.ecommerce.redis.repository.OrderStreamPublisher;
 import com.tpt.capstone_ecommerce.ecommerce.redis.utils.RedisSchema;
 import org.springframework.stereotype.Service;
@@ -42,6 +43,7 @@ public class OrderStreamPublisherService implements OrderStreamPublisher {
             eventData.put("cartId", order.getUser().getCart().getId());
             eventData.put("totalPrice", String.valueOf(order.getTotalPrice()));
             eventData.put("email", order.getUser().getEmail());
+            eventData.put("notificationType", NOTIFICATION_TYPE.ORDER_SUCCESS.name());
             jedis.xadd(key, StreamEntryID.NEW_ENTRY, eventData);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
@@ -55,6 +57,7 @@ public class OrderStreamPublisherService implements OrderStreamPublisher {
             String key = RedisSchema.getOrderStreamKey();
             eventData.put("orderId", orderId);
             eventData.put("shopIds", String.join(",", shopIds));
+            eventData.put("notificationType", NOTIFICATION_TYPE.ORDER_CANCELED.name());
             jedis.xadd(key, StreamEntryID.NEW_ENTRY, eventData);
         }
     }

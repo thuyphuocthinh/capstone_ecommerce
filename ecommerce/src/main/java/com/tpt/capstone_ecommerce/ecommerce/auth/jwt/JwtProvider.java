@@ -55,7 +55,7 @@ public class JwtProvider {
 
         List<String> roles = authorities.stream()
                 .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.toList()); // Chuyển về List<String>
+                .collect(Collectors.toList());
 
         return Jwts.builder()
                 .issuedAt(new Date())
