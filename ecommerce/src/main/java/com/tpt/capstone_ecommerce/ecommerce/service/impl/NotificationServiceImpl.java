@@ -129,12 +129,13 @@ public class NotificationServiceImpl implements NotificationService {
                 .build();
 
         this.notificationRepository.save(notification);
-        String destination = WebSocketUtil.getShopQueueDestination(shopId);
+        String destination = WebSocketUtil.getShopQueueDestination();
         messagingTemplate.convertAndSendToUser(
-                findShop.getId(),
+                findShop.getOwner().getEmail(),
                 destination,
                 NotificationDetailResponse.builder()
                         .id(notification.getId())
+                        .type(notification.getType().name())
                         .userId(findShop.getId())
                         .referenceId(referenceId)
                         .message(message)
@@ -144,7 +145,7 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public void addNewNotificationForUser(String userId, String referenceId, NOTIFICATION_TYPE notificationType, String message) throws NotFoundException, BadRequestException {
-        User findUser = this.userRepository.findById(userId)
+        User findUser = this.userRepository.findByEmail(userId)
                 .orElseThrow(() -> new NotFoundException(UserErrorConstant.USER_NOT_FOUND));
 
         Notification notification = Notification.builder()
@@ -155,14 +156,15 @@ public class NotificationServiceImpl implements NotificationService {
                 .build();
 
         this.notificationRepository.save(notification);
-        String destination = WebSocketUtil.getUserQueueDestination(userId);
+        String destination = WebSocketUtil.getUserQueueDestination();
         messagingTemplate.convertAndSendToUser(
-                findUser.getId(),
+                findUser.getEmail(),
                 destination,
                 NotificationDetailResponse.builder()
                         .id(notification.getId())
                         .userId(findUser.getId())
                         .referenceId(referenceId)
+                        .type(notification.getType().name())
                         .message(message)
                         .build()
         );

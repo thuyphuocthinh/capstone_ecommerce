@@ -5,7 +5,6 @@ import com.tpt.capstone_ecommerce.ecommerce.dto.request.CreateCommentRequest;
 import com.tpt.capstone_ecommerce.ecommerce.dto.request.UpdateCommentRequest;
 import com.tpt.capstone_ecommerce.ecommerce.dto.response.APISuccessResponseWithMetadata;
 import com.tpt.capstone_ecommerce.ecommerce.dto.response.CommentDetailResponse;
-import com.tpt.capstone_ecommerce.ecommerce.dto.response.NotificationDetailResponse;
 import com.tpt.capstone_ecommerce.ecommerce.dto.response.PaginationMetadata;
 import com.tpt.capstone_ecommerce.ecommerce.entity.Comment;
 import com.tpt.capstone_ecommerce.ecommerce.entity.Spu;
@@ -52,7 +51,7 @@ public class CommentServiceImpl implements CommentService {
         Comment savedComment = this.commentRepository.save(comment);
 
         this.notificationService.addNewNotificationForShop(findSpu.getShop().getId(), spuId, NOTIFICATION_TYPE.NEW_REVIEW, request.getContent());
-        this.notificationService.addNewNotificationForUser(findUser.getId(), spuId, NOTIFICATION_TYPE.NEW_REVIEW, request.getContent());
+        this.notificationService.addNewNotificationForUser(findUser.getEmail(), spuId, NOTIFICATION_TYPE.NEW_REVIEW, request.getContent());
 
         return savedComment.getId();
     }
@@ -106,7 +105,7 @@ public class CommentServiceImpl implements CommentService {
 
         Spu spu = findComment.getSpu();
         this.notificationService.addNewNotificationForShop(spu.getShop().getId(), spu.getId(), NOTIFICATION_TYPE.NEW_REVIEW, request.getContent());
-        this.notificationService.addNewNotificationForUser(findUser.getId(), spu.getId(), NOTIFICATION_TYPE.NEW_REVIEW, request.getContent());
+        this.notificationService.addNewNotificationForUser(findUser.getEmail(), spu.getId(), NOTIFICATION_TYPE.NEW_REVIEW, request.getContent());
 
         return savedComment.getId();
     }
