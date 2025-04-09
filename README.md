@@ -6,6 +6,7 @@
 - Spring JWT
 - Spring Mail
 - Spring Oauth
+- Stomp Websocket
 - Redis cache, Redis stream
 - Full text search
 ## Database
