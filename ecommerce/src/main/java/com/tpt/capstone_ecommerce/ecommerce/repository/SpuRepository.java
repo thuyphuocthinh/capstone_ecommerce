@@ -40,7 +40,7 @@ public interface SpuRepository extends JpaRepository<Spu, String> {
         JOIN categories c ON sp.category_id = c.id
         WHERE (:brandIds IS NULL OR sp.brand_id IN (:brandIds))
         AND (:categoryIds IS NULL OR sp.category_id IN (:categoryIds))
-        AND (:name IS NULL OR LOWER(sp.name) LIKE CONCAT('%', LOWER(:name), '%'))
+        AND (:name IS NULL OR MATCH(sp.name) AGAINST (CONCAT('+', :name, '*') IN BOOLEAN MODE))
         GROUP BY sp.id, sp.name, sp.description, sp.image_url, sp.slug,
                  sp.brand_id, b.name, sp.category_id, c.name, sp.shop_id, sk.discount
         ORDER BY price ASC
@@ -61,10 +61,10 @@ public interface SpuRepository extends JpaRepository<Spu, String> {
         JOIN categories c ON sp.category_id = c.id
         WHERE (:brandIds IS NULL OR sp.brand_id IN (:brandIds))
         AND (:categoryIds IS NULL OR sp.category_id IN (:categoryIds))
-        AND (:name IS NULL OR LOWER(sp.name) LIKE CONCAT('%', LOWER(:name), '%'))
+        AND (:name IS NULL OR MATCH(sp.name) AGAINST (CONCAT('+', :name, '*') IN BOOLEAN MODE))
         GROUP BY sp.id, sp.name, sp.description, sp.image_url, sp.slug,
                  sp.brand_id, b.name, sp.category_id, c.name, sp.shop_id, sk.discount
-        ORDER BY price ASC
+        ORDER BY price DESC
     """, nativeQuery = true)
     Page<SpuDetailResponse> findByBrandAndCategorySortedDesc(
             @Param("name") String name,
