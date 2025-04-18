@@ -2,20 +2,21 @@ package com.tpt.capstone_ecommerce.ecommerce.controller;
 
 import com.tpt.capstone_ecommerce.ecommerce.constant.AppConstant;
 import com.tpt.capstone_ecommerce.ecommerce.constant.HttpRequestConstant;
-import com.tpt.capstone_ecommerce.ecommerce.dto.request.ChangePasswordRequest;
-import com.tpt.capstone_ecommerce.ecommerce.dto.request.CreateUserAddressRequest;
-import com.tpt.capstone_ecommerce.ecommerce.dto.request.UpdateProfileRequest;
-import com.tpt.capstone_ecommerce.ecommerce.dto.request.UpdateUserAddressRequest;
+import com.tpt.capstone_ecommerce.ecommerce.dto.request.*;
 import com.tpt.capstone_ecommerce.ecommerce.dto.response.APISuccessResponse;
 import com.tpt.capstone_ecommerce.ecommerce.exception.NotFoundException;
 import com.tpt.capstone_ecommerce.ecommerce.service.NotificationService;
 import com.tpt.capstone_ecommerce.ecommerce.service.OrderService;
+import com.tpt.capstone_ecommerce.ecommerce.service.ShopService;
 import com.tpt.capstone_ecommerce.ecommerce.service.UserService;
+import jakarta.validation.Valid;
 import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
 
 @RestController
 @RequestMapping("/api/v1/users")
@@ -26,10 +27,13 @@ public class UserController {
 
     private final NotificationService notificationService;
 
-    public UserController(UserService userService, OrderService orderService, NotificationService notificationService) {
+    private final ShopService shopService;
+
+    public UserController(UserService userService, OrderService orderService, NotificationService notificationService, ShopService shopService) {
         this.userService = userService;
         this.orderService = orderService;
         this.notificationService = notificationService;
+        this.shopService = shopService;
     }
 
     @GetMapping("/profile")
@@ -101,6 +105,15 @@ public class UserController {
                 .data(this.userService.createUserAddress(id, createUserAddressRequest))
                 .build();
         return new ResponseEntity<>(apiSuccessResponse, HttpStatus.OK);
+    }
+
+    @PostMapping("/create-shop")
+    public ResponseEntity<?> createShopHandler(@Valid @ModelAttribute CreateShopRequest request) throws IOException {
+        APISuccessResponse<?> response = APISuccessResponse.builder()
+                .message("Success")
+                .data(this.shopService.createShop(request))
+                .build();
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @PatchMapping("/addresses/{id}")
