@@ -6,6 +6,8 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import jakarta.mail.MessagingException;
 import org.apache.coyote.BadRequestException;
+import org.hibernate.HibernateException;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -13,6 +15,7 @@ import org.springframework.transaction.TransactionSystemException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 import redis.clients.jedis.exceptions.JedisException;
@@ -52,6 +55,21 @@ public class GlobalExceptionHandler {
                 HttpStatus.NOT_FOUND
         );
     }
+
+    @ExceptionHandler(HibernateException.class)
+    @ResponseBody
+    public ResponseEntity<String> handleHibernateException(HibernateException ex) {
+        // Log exception
+        return new ResponseEntity<>("An error occurred while interacting with the database", HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    @ResponseBody
+    public ResponseEntity<String> handleConstraintViolation(ConstraintViolationException ex) {
+        // Log exception
+        return new ResponseEntity<>("Constraint violation error: " + ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<APIErrorResponse> handleRuntimeException(RuntimeException ex) {

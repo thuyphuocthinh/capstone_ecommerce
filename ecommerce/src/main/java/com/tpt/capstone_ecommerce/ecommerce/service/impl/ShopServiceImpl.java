@@ -1,9 +1,6 @@
 package com.tpt.capstone_ecommerce.ecommerce.service.impl;
 
-import com.tpt.capstone_ecommerce.ecommerce.constant.LocationErrorConstant;
-import com.tpt.capstone_ecommerce.ecommerce.constant.RoleErrorConstant;
-import com.tpt.capstone_ecommerce.ecommerce.constant.ShopErrorConstant;
-import com.tpt.capstone_ecommerce.ecommerce.constant.UserErrorConstant;
+import com.tpt.capstone_ecommerce.ecommerce.constant.*;
 import com.tpt.capstone_ecommerce.ecommerce.dto.request.CreateShopRequest;
 import com.tpt.capstone_ecommerce.ecommerce.dto.request.UpdateShopRequest;
 import com.tpt.capstone_ecommerce.ecommerce.dto.response.APISuccessResponseWithMetadata;
@@ -20,6 +17,8 @@ import com.tpt.capstone_ecommerce.ecommerce.repository.UserRepository;
 import com.tpt.capstone_ecommerce.ecommerce.service.LocationService;
 import com.tpt.capstone_ecommerce.ecommerce.service.ShopService;
 import com.tpt.capstone_ecommerce.ecommerce.service.UploadService;
+import com.tpt.capstone_ecommerce.ecommerce.utils.SecurityUtils;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -60,12 +59,18 @@ public class ShopServiceImpl implements ShopService {
     }
 
     @Override
+    @Transactional
     public String createShop(CreateShopRequest createShopRequest) throws IOException {
         String ownerId = createShopRequest.getOwnerId();
         Optional<Shop> checkOwner = this.shopRepository.findByOwnerId(ownerId);
 
+        String currentUserId = SecurityUtils.getCurrentUserId();
+        if(!currentUserId.equals(ownerId)) {
+            throw new BadCredentialsException(AuthConstantError.NOT_ALLOWED_TO_ACCESS_RESOURCE);
+        }
+
         if(checkOwner.isPresent()){
-            throw new BadCredentialsException(ShopErrorConstant.SHOP_ALREADY_EXISTS_WITH_THIS_OWNER);
+            throw new BadRequestException(ShopErrorConstant.SHOP_ALREADY_EXISTS_WITH_THIS_OWNER);
         }
 
         Location location = this.locationRepository.findById(createShopRequest.getLocationId()).orElseThrow(

@@ -145,15 +145,6 @@ public class ShopController {
         return new ResponseEntity<>(apiResponse, HttpStatus.CREATED);
     }
 
-    @PostMapping
-    public ResponseEntity<?> createShopHandler(@Valid @ModelAttribute CreateShopRequest request) throws IOException {
-        APISuccessResponse<?> response = APISuccessResponse.builder()
-                .message("Success")
-                .data(this.shopService.createShop(request))
-                .build();
-        return new ResponseEntity<>(response, HttpStatus.CREATED);
-    }
-
     @PreAuthorize("@customSecurityExpression.isShopOwner(#id, authentication)")
     @PatchMapping("/{id}")
     public ResponseEntity<?> updateShopHandler(
