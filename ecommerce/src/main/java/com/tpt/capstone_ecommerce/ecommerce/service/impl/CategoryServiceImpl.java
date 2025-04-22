@@ -62,8 +62,10 @@ public class CategoryServiceImpl implements CategoryService {
                     .build();
         });
 
-        this.cacheCategory.incrementTotalItems(RedisSchema.getCategoryKeyItem());
-        return this.categoryRepository.save(findCategoryOrCreate).getId();
+        Category category = this.categoryRepository.save(findCategoryOrCreate);
+        String key = RedisSchema.getCategoryKey();
+        this.cacheCategory.addNewCategory(key, category);
+        return category.getId();
     }
 
     @Override
@@ -109,6 +111,8 @@ public class CategoryServiceImpl implements CategoryService {
         }
 
         Category savedCategory = this.categoryRepository.save(category);
+        String key = RedisSchema.getCategoryKey();
+        this.cacheCategory.updateCategory(key, id, savedCategory);
 
         return CategoryDetailResponse.builder()
                 .name(savedCategory.getName())
@@ -124,22 +128,18 @@ public class CategoryServiceImpl implements CategoryService {
     public String deleteCategory(String id) throws NotFoundException {
         Category category = this.categoryRepository.findById(id).orElseThrow(() -> new NotFoundException(CategoryErrorConstant.CATEGORY_NOT_FOUND));
         this.categoryRepository.delete(category);
-        this.cacheCategory.decrementTotalItems(RedisSchema.getCategoryKeyItem());
+        String key = RedisSchema.getCategoryKey();
+        this.cacheCategory.removeCategory(key, id);
         return "Success";
     }
 
     @Override
-    public APISuccessResponseWithMetadata<?> getAllCategories(Integer pageNumber, Integer pageSize) throws NotFoundException {
-        String key = RedisSchema.getCategoryKey(pageNumber);
-        String totalItemsKey = RedisSchema.getCategoryKeyItem();
-        PaginationMetadata paginationMetadataReturn = new PaginationMetadata();
-
+    public List<CategoryDetailResponse> getAllCategories() throws NotFoundException {
+        String key = RedisSchema.getCategoryKey();
         List<CategoryDetailResponse> categoryDetailResponses = this.cacheCategory.getListCategories(key);
+        log.info("Category from cache: {}", categoryDetailResponses);
         if (categoryDetailResponses.isEmpty()) {
-            Pageable page = PageRequest.of(Math.max(0, pageNumber - 1), pageSize);
-            Page<Category> categoryPage = this.categoryRepository.findAll(page);
-
-            List<Category> categories = categoryPage.getContent();
+            List<Category> categories = this.categoryRepository.findAll();
 
             categoryDetailResponses = categories.stream()
                     .map(category -> CategoryDetailResponse.builder()
@@ -153,31 +153,8 @@ public class CategoryServiceImpl implements CategoryService {
                     .collect(Collectors.toList());
 
             this.cacheCategory.saveListCategories(key, categoryDetailResponses);
-
-            paginationMetadataReturn = PaginationMetadata.builder()
-                    .currentPage(pageNumber)
-                    .pageSize(pageSize)
-                    .totalPages((int) Math.ceil((double) categoryPage.getTotalElements() / pageSize))
-                    .totalItems((int) categoryPage.getTotalElements())
-                    .build();
-
-        } else {
-            String totalItemsFromCache = this.cacheCategory.getTotalItems(totalItemsKey);
-            if (totalItemsFromCache != null) {
-                int totalItems = Integer.parseInt(totalItemsFromCache);
-                paginationMetadataReturn = PaginationMetadata.builder()
-                        .currentPage(pageNumber)
-                        .pageSize(pageSize)
-                        .totalPages((int) Math.ceil((double) totalItems / pageSize))
-                        .totalItems(totalItems)
-                        .build();
-            }
         }
-        return APISuccessResponseWithMetadata.builder()
-                .message("Success")
-                .data(categoryDetailResponses)
-                .metadata(paginationMetadataReturn)
-                .build();
+        return categoryDetailResponses;
     }
 
     @Override

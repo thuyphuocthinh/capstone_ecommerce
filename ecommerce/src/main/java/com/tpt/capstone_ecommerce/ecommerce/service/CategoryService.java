@@ -16,7 +16,7 @@ public interface CategoryService {
     CategoryDetailResponse getCategoryDetail(String id) throws NotFoundException;
     CategoryDetailResponse updateCategory(String id, UpdateCategoryRequest request) throws NotFoundException, IOException;
     String deleteCategory(String id) throws NotFoundException;
-    APISuccessResponseWithMetadata<?> getAllCategories(Integer pageNumber, Integer pageSize) throws NotFoundException;
+    List<CategoryDetailResponse> getAllCategories() throws NotFoundException;
     APISuccessResponseWithMetadata<?>  getCategoriesByParentId(String parentId, Integer pageNumber, Integer pageSize) throws NotFoundException;
     APISuccessResponseWithMetadata<?> getParentCategories(Integer pageNumber, Integer pageSize) throws NotFoundException;
     List<CategoryNestedResponse> getNestedCategories() throws NotFoundException;

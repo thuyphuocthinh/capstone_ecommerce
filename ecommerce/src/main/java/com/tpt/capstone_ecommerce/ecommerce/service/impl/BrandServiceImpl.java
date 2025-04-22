@@ -3,27 +3,24 @@ package com.tpt.capstone_ecommerce.ecommerce.service.impl;
 import com.tpt.capstone_ecommerce.ecommerce.constant.BrandErrorConstant;
 import com.tpt.capstone_ecommerce.ecommerce.dto.request.CreateBrandRequest;
 import com.tpt.capstone_ecommerce.ecommerce.dto.request.UpdateBrandRequest;
-import com.tpt.capstone_ecommerce.ecommerce.dto.response.APISuccessResponseWithMetadata;
 import com.tpt.capstone_ecommerce.ecommerce.dto.response.BrandDetailResponse;
-import com.tpt.capstone_ecommerce.ecommerce.dto.response.PaginationMetadata;
 import com.tpt.capstone_ecommerce.ecommerce.entity.Brand;
 import com.tpt.capstone_ecommerce.ecommerce.exception.NotFoundException;
+import com.tpt.capstone_ecommerce.ecommerce.redis.repository.CacheBrand;
+import com.tpt.capstone_ecommerce.ecommerce.redis.utils.RedisSchema;
 import com.tpt.capstone_ecommerce.ecommerce.repository.BrandRepository;
 import com.tpt.capstone_ecommerce.ecommerce.service.BrandService;
 import com.tpt.capstone_ecommerce.ecommerce.service.UploadService;
 import com.tpt.capstone_ecommerce.ecommerce.utils.Slug;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -32,9 +29,12 @@ public class BrandServiceImpl implements BrandService {
 
     private final UploadService uploadService;
 
-    public BrandServiceImpl(BrandRepository brandRepository, @Qualifier("cloudinary") UploadService uploadService) {
+    private final CacheBrand cacheBrand;
+
+    public BrandServiceImpl(BrandRepository brandRepository, @Qualifier("cloudinary") UploadService uploadService, CacheBrand cacheBrand) {
         this.brandRepository = brandRepository;
         this.uploadService = uploadService;
+        this.cacheBrand = cacheBrand;
     }
 
     @Override
@@ -56,7 +56,10 @@ public class BrandServiceImpl implements BrandService {
                     .build();
         });
 
-        return this.brandRepository.save(findBrandOrCreate).getId();
+        Brand brand = this.brandRepository.save(findBrandOrCreate);
+        String key = RedisSchema.getBrandKey();
+        this.cacheBrand.addNewBrand(key, brand);
+        return brand.getId();
     }
 
     @Override
@@ -95,6 +98,8 @@ public class BrandServiceImpl implements BrandService {
         }
 
         Brand savedBrand = this.brandRepository.save(brand);
+        String key = RedisSchema.getBrandKey();
+        this.cacheBrand.updateBrand(key, id, savedBrand);
 
         return BrandDetailResponse.builder()
                 .id(savedBrand.getId())
@@ -109,37 +114,31 @@ public class BrandServiceImpl implements BrandService {
     public String deleteBrand(String id) throws NotFoundException {
         Brand brand = this.brandRepository.findById(id).orElseThrow(() -> new NotFoundException(BrandErrorConstant.BRAND_NOT_FOUND));
         this.brandRepository.delete(brand);
+        String key = RedisSchema.getBrandKey();
+        this.cacheBrand.removeBrand(key, id);
         return "Success";
     }
 
     @Override
-    public APISuccessResponseWithMetadata<?> getAllBrands(Integer pageNumber, Integer pageSize) throws NotFoundException {
-        Pageable page = PageRequest.of(Math.max(0, pageNumber - 1), pageSize);
-        Page<Brand> brandsPage = this.brandRepository.findAll(page);
+    public List<BrandDetailResponse> getAllBrands() throws NotFoundException {
+        String key = RedisSchema.getBrandKey();
+        List<BrandDetailResponse> brandDetailResponses = this.cacheBrand.getListCategories(key);
+        log.info("Brand from cache: {}", brandDetailResponses);
+        if (brandDetailResponses.isEmpty()) {
+            List<Brand> brands = this.brandRepository.findAll();
 
-        log.info("addresses res:::: {}", brandsPage);
+            brandDetailResponses = brands.stream()
+                    .map(brand -> BrandDetailResponse.builder()
+                            .id(brand.getId())
+                            .slug(brand.getSlug())
+                            .description(brand.getDescription())
+                            .name(brand.getName())
+                            .imageUrl(brand.getImageUrl())
+                            .build())
+                    .collect(Collectors.toList());
 
-        List<Brand> brands = brandsPage.getContent();
-
-        List<BrandDetailResponse> addressResponses = brands.stream().map(brand -> BrandDetailResponse.builder()
-                .id(brand.getId())
-                .slug(brand.getSlug())
-                .description(brand.getDescription())
-                .name(brand.getName())
-                .imageUrl(brand.getImageUrl())
-                .build()).toList();
-
-        PaginationMetadata paginationMetadata = PaginationMetadata.builder()
-                .currentPage(brandsPage.getNumber() + 1)
-                .pageSize(brandsPage.getSize())
-                .totalPages(brandsPage.getTotalPages())
-                .totalItems((int)brandsPage.getTotalElements())
-                .build();
-
-        return APISuccessResponseWithMetadata.builder()
-                .message("Success")
-                .data(addressResponses)
-                .metadata(paginationMetadata)
-                .build();
+            this.cacheBrand.saveListBrands(key, brandDetailResponses);
+        }
+        return brandDetailResponses;
     }
 }

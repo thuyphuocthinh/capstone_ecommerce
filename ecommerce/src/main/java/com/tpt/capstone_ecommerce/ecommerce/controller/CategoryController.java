@@ -11,12 +11,14 @@ import com.tpt.capstone_ecommerce.ecommerce.service.CategoryService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 
 @RestController
 @RequestMapping("/api/v1/categories")
+@PreAuthorize("hasRole('ROLE_ADMIN')")
 public class CategoryController {
     private final CategoryService categoryService;
 
@@ -64,10 +66,12 @@ public class CategoryController {
 
     @GetMapping
     public ResponseEntity<?> getListCategoriesHandler(
-            @RequestParam(name = "pageNumber", required = false, defaultValue = AppConstant.PAGE_NUMBER) Integer pageNumber,
-            @RequestParam(name = "pageSize", required = false, defaultValue = AppConstant.PAGE_SIZE) Integer pageSize
     ) throws NotFoundException {
-        return new ResponseEntity<>(this.categoryService.getAllCategories(pageNumber, pageSize), HttpStatus.OK);
+        APISuccessResponse<?> apiSuccessResponse = APISuccessResponse.builder()
+                .data(this.categoryService.getAllCategories())
+                .message("Success")
+                .build();
+        return new ResponseEntity<>(apiSuccessResponse, HttpStatus.OK);
     }
 
     @GetMapping("/primary-category/{id}/sub-categories")
