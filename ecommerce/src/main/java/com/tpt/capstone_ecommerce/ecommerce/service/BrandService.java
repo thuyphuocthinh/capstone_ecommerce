@@ -15,5 +15,5 @@ public interface BrandService {
     BrandDetailResponse getBrandDetail(String id) throws NotFoundException;
     BrandDetailResponse updateBrand(String id, UpdateBrandRequest updateBrandRequest) throws IOException;
     String deleteBrand(String id) throws NotFoundException;
-    APISuccessResponseWithMetadata<?> getAllBrands(Integer pageNumber, Integer pageSize) throws NotFoundException;
+    List<BrandDetailResponse> getAllBrands() throws NotFoundException;
 }

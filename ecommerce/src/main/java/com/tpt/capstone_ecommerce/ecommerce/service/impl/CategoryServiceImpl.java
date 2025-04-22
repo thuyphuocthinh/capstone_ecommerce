@@ -112,7 +112,7 @@ public class CategoryServiceImpl implements CategoryService {
 
         Category savedCategory = this.categoryRepository.save(category);
         String key = RedisSchema.getCategoryKey();
-        this.cacheCategory.addNewCategory(key, savedCategory);
+        this.cacheCategory.updateCategory(key, id, savedCategory);
 
         return CategoryDetailResponse.builder()
                 .name(savedCategory.getName())
@@ -136,7 +136,6 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public List<CategoryDetailResponse> getAllCategories() throws NotFoundException {
         String key = RedisSchema.getCategoryKey();
-
         List<CategoryDetailResponse> categoryDetailResponses = this.cacheCategory.getListCategories(key);
         log.info("Category from cache: {}", categoryDetailResponses);
         if (categoryDetailResponses.isEmpty()) {

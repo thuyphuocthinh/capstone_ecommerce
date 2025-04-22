@@ -11,12 +11,14 @@ import com.tpt.capstone_ecommerce.ecommerce.service.CategoryService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 
 @RestController
 @RequestMapping("/api/v1/categories")
+@PreAuthorize("hasRole('ROLE_ADMIN')")
 public class CategoryController {
     private final CategoryService categoryService;
 
