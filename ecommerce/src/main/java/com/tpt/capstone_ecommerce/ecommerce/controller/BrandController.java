@@ -15,7 +15,6 @@ import java.io.IOException;
 
 @RestController
 @RequestMapping("/api/v1/brands")
-//@PreAuthorize("hasRole('ROLE_ADMIN')")
 public class BrandController {
 
     private final BrandService brandService;
@@ -24,6 +23,7 @@ public class BrandController {
         this.brandService = brandService;
     }
 
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping
     public ResponseEntity<?> createBrandHandler(@Valid @ModelAttribute CreateBrandRequest request) throws IOException {
         APISuccessResponse<?> apiSuccessResponse = APISuccessResponse.builder()
@@ -33,6 +33,7 @@ public class BrandController {
         return new ResponseEntity<>(apiSuccessResponse, HttpStatus.CREATED);
     }
 
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PatchMapping("/{id}")
     public ResponseEntity<?> updateBrandHandler(
             @PathVariable String id,
@@ -53,6 +54,7 @@ public class BrandController {
         return new ResponseEntity<>(apiSuccessResponse, HttpStatus.OK);
     }
 
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteBrandHandler(@PathVariable String id) throws NotFoundException {
         APISuccessResponse<?> apiSuccessResponse = APISuccessResponse.builder()

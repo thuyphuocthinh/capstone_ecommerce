@@ -8,19 +8,19 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/role")
 public class TestRoleController {
-    @PreAuthorize("hasRole('ROLE_CUSTOMER')")
+    @PreAuthorize("hasAuthority('ROLE_CUSTOMER')")
     @GetMapping("/customer")
     public String roleCustomer() {
         return "Customer";
     }
 
-    @PreAuthorize("hasRole('ROLE_SELLER')")
+    @PreAuthorize("hasAuthority('ROLE_SELLER')")
     @GetMapping("/seller")
     public String roleSeller() {
         return "Seller";
     }
 
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping("/admin")
     public String roleAdmin() {
         return "Admin";

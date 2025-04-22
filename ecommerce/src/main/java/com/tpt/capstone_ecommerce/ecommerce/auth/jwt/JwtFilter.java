@@ -104,11 +104,14 @@ public class JwtFilter extends OncePerRequestFilter {
 
     private String parseJwt(HttpServletRequest request) {
         String headerAuth = request.getHeader(JwtConstant.JWT_HEADER);
-        if(headerAuth == null) {
-            throw new JwtException("Invalid access token");
-        } else if (headerAuth.startsWith("Bearer ")) {
-            return headerAuth.substring(7).trim();
+        if (headerAuth != null && headerAuth.startsWith("Bearer ")) {
+            String jwt = headerAuth.substring(7).trim();
+            if (jwt.isBlank()) {
+                throw new JwtException("Access token is empty");
+            }
+            return jwt;
         }
-        throw new JwtException("Invalid access token");
+        return null;
     }
+
 }

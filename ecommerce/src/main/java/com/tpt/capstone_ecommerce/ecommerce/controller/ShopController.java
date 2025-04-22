@@ -24,7 +24,7 @@ import java.io.IOException;
 
 @RestController
 @RequestMapping("/api/v1/shops")
-@PreAuthorize("hasRole('ROLE_SELLER')")
+@PreAuthorize("hasAuthority('ROLE_SELLER')")
 public class ShopController {
     private final ShopService shopService;
 

@@ -18,7 +18,6 @@ import java.io.IOException;
 
 @RestController
 @RequestMapping("/api/v1/categories")
-@PreAuthorize("hasRole('ROLE_ADMIN')")
 public class CategoryController {
     private final CategoryService categoryService;
 
@@ -26,6 +25,7 @@ public class CategoryController {
         this.categoryService = categoryService;
     }
 
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping
     public ResponseEntity<?> createCategoryHandler(@Valid @ModelAttribute CreateCategoryRequest request) throws IOException {
         APISuccessResponse<?> apiSuccessResponse = APISuccessResponse.builder()
@@ -35,6 +35,7 @@ public class CategoryController {
         return new ResponseEntity<>(apiSuccessResponse, HttpStatus.CREATED);
     }
 
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PatchMapping("/{id}")
     public ResponseEntity<?> updateCategoryHandler(
             @PathVariable String id,
@@ -55,6 +56,7 @@ public class CategoryController {
         return new ResponseEntity<>(apiSuccessResponse, HttpStatus.OK);
     }
 
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteCategoryHandler(@PathVariable String id) throws NotFoundException {
         APISuccessResponse<?> apiSuccessResponse = APISuccessResponse.builder()
