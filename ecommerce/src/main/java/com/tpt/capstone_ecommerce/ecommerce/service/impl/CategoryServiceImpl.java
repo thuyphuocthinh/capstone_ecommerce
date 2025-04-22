@@ -135,6 +135,7 @@ public class CategoryServiceImpl implements CategoryService {
         PaginationMetadata paginationMetadataReturn = new PaginationMetadata();
 
         List<CategoryDetailResponse> categoryDetailResponses = this.cacheCategory.getListCategories(key);
+        log.info("Category from cache: {}", categoryDetailResponses);
         if (categoryDetailResponses.isEmpty()) {
             Pageable page = PageRequest.of(Math.max(0, pageNumber - 1), pageSize);
             Page<Category> categoryPage = this.categoryRepository.findAll(page);
