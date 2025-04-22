@@ -22,7 +22,7 @@ public class LocationController {
         this.locationService = locationService;
     }
 
-    // @PreAuthorize("hasRole('ROLE_ADMIN')")
+    // @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping
     public ResponseEntity<?> addLocationHandler(@Valid @RequestBody CreateLocationRequest createLocationRequest) throws BadRequestException {
         APISuccessResponse<?> apiSuccessResponse = APISuccessResponse.builder()
@@ -36,7 +36,7 @@ public class LocationController {
         );
     }
 
-    // @PreAuthorize("hasRole('ROLE_ADMIN')")
+    // @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PatchMapping("/{id}")
     public ResponseEntity<?> updateLocationHandler(@PathVariable String id, @Valid @RequestBody UpdateLocationRequest updateLocationRequest) throws NotFoundException {
         APISuccessResponse<?> apiSuccessResponse = APISuccessResponse.builder()
@@ -50,7 +50,7 @@ public class LocationController {
         );
     }
 
-    // @PreAuthorize("hasRole('ROLE_ADMIN')")
+    // @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteLocationHandler(@PathVariable String id) throws NotFoundException {
         APISuccessResponse<?> apiSuccessResponse = APISuccessResponse.builder().data(
