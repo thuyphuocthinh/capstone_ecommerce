@@ -26,6 +26,7 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import javax.annotation.Nonnull;
 import javax.crypto.SecretKey;
 import java.io.IOException;
 import java.util.List;
@@ -44,10 +45,18 @@ public class JwtFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        String jwt = parseJwt(request);
-
-        log.debug("JWT found: {}", jwt != null ? "Yes" : "No");
+    protected void doFilterInternal(@Nonnull HttpServletRequest request,
+                                    @Nonnull HttpServletResponse response,
+                                    @Nonnull FilterChain filterChain) throws ServletException, IOException {
+        String jwt = "";
+        try {
+            jwt = parseJwt(request);
+        } catch (JwtException e) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"status\": \"error\", \"message\": \"Invalid access token\"}");
+            return;
+        }
 
         if (jwt != null) {
             try {
@@ -95,9 +104,11 @@ public class JwtFilter extends OncePerRequestFilter {
 
     private String parseJwt(HttpServletRequest request) {
         String headerAuth = request.getHeader(JwtConstant.JWT_HEADER);
-        if (headerAuth != null && headerAuth.startsWith("Bearer ")) {
-            return headerAuth.substring(7);
+        if(headerAuth == null) {
+            throw new JwtException("Invalid access token");
+        } else if (headerAuth.startsWith("Bearer ")) {
+            return headerAuth.substring(7).trim();
         }
-        return null;
+        throw new JwtException("Invalid access token");
     }
 }
