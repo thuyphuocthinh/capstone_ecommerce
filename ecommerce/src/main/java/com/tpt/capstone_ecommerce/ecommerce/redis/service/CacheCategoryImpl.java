@@ -57,9 +57,7 @@ public class CacheCategoryImpl implements CacheCategory {
                 categoryData.put("imageUrl", category.getImageUrl());
                 categoryData.put("slug", category.getSlug());
                 categoryData.put("parentId", category.getParentId());
-
                 String categoryJson = new JSONObject(categoryData).toString();
-
                 jedis.hset(key, category.getId(), categoryJson);
             }
         }

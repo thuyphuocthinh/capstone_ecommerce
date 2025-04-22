@@ -33,20 +33,20 @@ public class RedisSchema {
         return RedisKeyHelper.getKey("shopConsumerGroup");
     }
 
-    public static String getUserConsumerGroup() {
-        return RedisKeyHelper.getKey("userConsumerGroup");
-    }
+//    public static String getUserConsumerGroup() {
+//        return RedisKeyHelper.getKey("userConsumerGroup");
+//    }
 
     public static String getShopConsumerName() {
         return RedisKeyHelper.getKey("shopConsumerName");
     }
 
-    public static String getUserConsumerName(String userId) {
-        return RedisKeyHelper.getKey("user:" + userId);
-    }
+//    public static String getUserConsumerName(String userId) {
+//        return RedisKeyHelper.getKey("user:" + userId);
+//    }
 
-    public static String getCategoryKey(Integer pageNumber) {
-        return RedisKeyHelper.getKey("category:" + pageNumber);
+    public static String getCategoryKey() {
+        return RedisKeyHelper.getKey("category");
     }
 
     public static String getCategoryKeyItem() {

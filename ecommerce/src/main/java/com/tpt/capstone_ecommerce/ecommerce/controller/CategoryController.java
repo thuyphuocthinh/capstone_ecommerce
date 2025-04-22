@@ -64,10 +64,12 @@ public class CategoryController {
 
     @GetMapping
     public ResponseEntity<?> getListCategoriesHandler(
-            @RequestParam(name = "pageNumber", required = false, defaultValue = AppConstant.PAGE_NUMBER) Integer pageNumber,
-            @RequestParam(name = "pageSize", required = false, defaultValue = AppConstant.PAGE_SIZE) Integer pageSize
     ) throws NotFoundException {
-        return new ResponseEntity<>(this.categoryService.getAllCategories(pageNumber, pageSize), HttpStatus.OK);
+        APISuccessResponse<?> apiSuccessResponse = APISuccessResponse.builder()
+                .data(this.categoryService.getAllCategories())
+                .message("Success")
+                .build();
+        return new ResponseEntity<>(apiSuccessResponse, HttpStatus.OK);
     }
 
     @GetMapping("/primary-category/{id}/sub-categories")
