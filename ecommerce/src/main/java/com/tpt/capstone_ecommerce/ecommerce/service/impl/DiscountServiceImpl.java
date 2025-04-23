@@ -2,6 +2,7 @@ package com.tpt.capstone_ecommerce.ecommerce.service.impl;
 
 import com.tpt.capstone_ecommerce.ecommerce.constant.AuthConstantError;
 import com.tpt.capstone_ecommerce.ecommerce.constant.DiscountErrorConstant;
+import com.tpt.capstone_ecommerce.ecommerce.constant.ShopErrorConstant;
 import com.tpt.capstone_ecommerce.ecommerce.constant.UserErrorConstant;
 import com.tpt.capstone_ecommerce.ecommerce.dto.request.CreateDiscountRequest;
 import com.tpt.capstone_ecommerce.ecommerce.dto.request.UpdateDiscountRequest;
@@ -9,12 +10,14 @@ import com.tpt.capstone_ecommerce.ecommerce.dto.response.APISuccessResponseWithM
 import com.tpt.capstone_ecommerce.ecommerce.dto.response.DiscountDetailResponse;
 import com.tpt.capstone_ecommerce.ecommerce.dto.response.PaginationMetadata;
 import com.tpt.capstone_ecommerce.ecommerce.entity.Discount;
+import com.tpt.capstone_ecommerce.ecommerce.entity.Shop;
 import com.tpt.capstone_ecommerce.ecommerce.entity.User;
 import com.tpt.capstone_ecommerce.ecommerce.enums.DISCOUNT_STATUS;
 import com.tpt.capstone_ecommerce.ecommerce.enums.DISCOUNT_TYPE;
 import com.tpt.capstone_ecommerce.ecommerce.enums.USER_ROLE;
 import com.tpt.capstone_ecommerce.ecommerce.exception.NotFoundException;
 import com.tpt.capstone_ecommerce.ecommerce.repository.DiscountRepository;
+import com.tpt.capstone_ecommerce.ecommerce.repository.ShopRepository;
 import com.tpt.capstone_ecommerce.ecommerce.repository.UserRepository;
 import com.tpt.capstone_ecommerce.ecommerce.service.DiscountService;
 import com.tpt.capstone_ecommerce.ecommerce.utils.SecurityUtils;
@@ -38,13 +41,16 @@ public class DiscountServiceImpl implements DiscountService {
 
     private final UserRepository userRepository;
 
-    public DiscountServiceImpl(DiscountRepository discountRepository, UserRepository userRepository) {
+    private final ShopRepository shopRepository;
+
+    public DiscountServiceImpl(DiscountRepository discountRepository, UserRepository userRepository, ShopRepository shopRepository) {
         this.discountRepository = discountRepository;
         this.userRepository = userRepository;
+        this.shopRepository = shopRepository;
     }
 
     @Override
-    public String createDiscount(String creatorId, CreateDiscountRequest request) throws RuntimeException, BadRequestException {
+    public String createDiscount(String shopId, CreateDiscountRequest request) throws RuntimeException, BadRequestException {
         String name = request.getName().trim();
         String description = request.getDescription().trim();
         String code = request.getCode().trim();
@@ -54,7 +60,9 @@ public class DiscountServiceImpl implements DiscountService {
         LocalDateTime startDate = request.getStartDate();
         LocalDateTime endDate = request.getEndDate();
 
-        User findCreator = this.userRepository.findById(creatorId).orElseThrow(() -> new NotFoundException(UserErrorConstant.USER_NOT_FOUND));
+        Shop findShop = this.shopRepository.findById(shopId)
+                .orElseThrow(() -> new NotFoundException(ShopErrorConstant.SHOP_NOT_FOUND));
+        User findCreator = findShop.getOwner();
 
         Discount findDiscount = this.discountRepository.findByCode(code);
         if(findDiscount != null) {
@@ -83,7 +91,6 @@ public class DiscountServiceImpl implements DiscountService {
         } catch (DataIntegrityViolationException e) {
             throw new BadRequestException("Dữ liệu không hợp lệ: " + e.getMessage());
         } catch (Exception e) {
-            e.printStackTrace();
             throw new RuntimeException("Lỗi không xác định: " + e.getMessage());
         }
 
@@ -207,9 +214,11 @@ public class DiscountServiceImpl implements DiscountService {
     }
 
     @Override
-    public APISuccessResponseWithMetadata<?> getDiscountsByCreator(String creatorId, Integer pageNumber, Integer pageSize) throws NotFoundException, BadRequestException {
+    public APISuccessResponseWithMetadata<?> getDiscountsByCreator(String shopId, Integer pageNumber, Integer pageSize) throws NotFoundException, BadRequestException {
         Pageable pageRequest = PageRequest.of(pageNumber, pageSize);
-        User findCreator = this.userRepository.findById(creatorId).orElseThrow(() -> new NotFoundException(UserErrorConstant.USER_NOT_FOUND));
+
+        Shop findShop = this.shopRepository.findById(shopId).orElseThrow(() -> new NotFoundException(ShopErrorConstant.SHOP_NOT_FOUND));
+        User findCreator = findShop.getOwner();
 
         String currentUserId = SecurityUtils.getCurrentUserId();
         if(!currentUserId.equals(findCreator.getId())) {
