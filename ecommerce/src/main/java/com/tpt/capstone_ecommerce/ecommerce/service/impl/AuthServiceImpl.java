@@ -169,9 +169,12 @@ public class AuthServiceImpl implements AuthService {
     public TokenResponse refreshTokenService(RefreshTokenRequest refreshTokenRequest) {
         String refreshToken = refreshTokenRequest.getRefreshToken();
         Token verify = this.jwtProvider.verifyRefreshToken(refreshToken);
-
-        // generate a new pair of token
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Token getFromDb = this.tokenRepository.findByRefreshToken(refreshTokenRequest.getRefreshToken())
+                .orElseThrow(() -> new BadCredentialsException("Invalid refresh token"));
+        UserDetails userDetails = customUserDetailsService.loadUserByUsername(getFromDb.getUser().getEmail());
+        Authentication authentication = new UsernamePasswordAuthenticationToken(
+                userDetails, null, userDetails.getAuthorities()
+        );
         String newAccessToken = this.jwtProvider.generateAccessToken(authentication);
         String newRefreshToken = this.jwtProvider.generateRefreshToken(authentication);
         verify.setRefreshToken(newRefreshToken);

@@ -73,9 +73,9 @@ public class WebSecurityConfig {
                                 "/api/v1/auth/refresh-token",
                                 "/api/v1/auth/google/verify-token"
                         ).permitAll()
-                        .requestMatchers("/api/v1/admin/**").hasAuthority("ADMIN")
-                        .requestMatchers("/api/v1/shops/**").hasAnyAuthority("SELLER")
-                        .requestMatchers("/api/v1/**").hasAnyAuthority("CUSTOMER", "SELLER", "ADMIN")
+                        .requestMatchers("/api/v1/admin/**").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers("/api/v1/shops/**").hasAuthority("ROLE_SELLER")
+                        .requestMatchers("/api/v1/**").hasAnyAuthority("ROLE_CUSTOMER", "ROLE_SELLER", "ROLE_ADMIN")
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         .anyRequest().authenticated()
