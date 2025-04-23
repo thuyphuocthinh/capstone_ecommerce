@@ -21,7 +21,7 @@ public class ResetPasswordRequest {
     @Size(min = 8, message = "Confirm password min length is 8")
     private String confirmPassword;
 
-    @NotBlank(message = "Email cannot be blank")
-    @Email(message = "Email is invalid")
-    private String email;
+    @NotBlank(message = "Otp cannot be blank")
+    @Size(min = 36, max = 36, message = "Otp length is 36")
+    private String otp;
 }

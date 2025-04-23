@@ -27,7 +27,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
@@ -276,13 +278,23 @@ public class AuthServiceImpl implements AuthService {
     public String resetPasswordService(ResetPasswordRequest resetPasswordRequest) {
         String password = resetPasswordRequest.getPassword();
         String confirmPassword = resetPasswordRequest.getConfirmPassword();
-        String email = resetPasswordRequest.getEmail();
+        String otp = resetPasswordRequest.getOtp();
 
         if(!password.equals(confirmPassword)) {
             throw new BadCredentialsException("Passwords do not match");
         }
 
-        User user = this.userRepository.findByEmail(email).orElseThrow(() -> new NotFoundException("User not found"));
+        Otp findOtp = this.otpRepository.findByOtp(otp);
+
+        if(findOtp == null) {
+            throw new NotFoundException("Invalid request");
+        }
+
+        if(findOtp.getExpiredAt().isBefore(LocalDateTime.ofInstant(Instant.now(), ZoneId.systemDefault()))) {
+            throw new NotFoundException("Invalid request");
+        }
+
+        User user = this.userRepository.findByEmail(findOtp.getUserEmail()).orElseThrow(() -> new NotFoundException(UserErrorConstant.USER_NOT_FOUND));
         user.setPassword(this.passwordEncoder.encode(password));
         this.userRepository.save(user);
 
