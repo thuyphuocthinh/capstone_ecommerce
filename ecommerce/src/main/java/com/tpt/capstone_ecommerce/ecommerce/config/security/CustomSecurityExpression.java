@@ -7,11 +7,13 @@ import com.tpt.capstone_ecommerce.ecommerce.entity.User;
 import com.tpt.capstone_ecommerce.ecommerce.exception.NotFoundException;
 import com.tpt.capstone_ecommerce.ecommerce.repository.ShopRepository;
 import com.tpt.capstone_ecommerce.ecommerce.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 
 @Component
+@Slf4j
 public class CustomSecurityExpression {
     private final UserRepository userRepository;
 
@@ -39,6 +41,7 @@ public class CustomSecurityExpression {
 
         Shop shop = shopRepository.findByOwnerId(user.getId())
                 .orElseThrow(() -> new NotFoundException(ShopErrorConstant.SHOP_NOT_FOUND));
+        log.info("shop id: {}", shop.getId());
         return shop.getId().equals(shopId);
     }
 }

@@ -186,6 +186,7 @@ public class ShopController {
         return new ResponseEntity<>(this.shopService.getListShops(pageNumber, pageSize), HttpStatus.OK);
     }
 
+    @PreAuthorize("@customSecurityExpression.isShopOwner(#id, authentication)")
     @PostMapping("/{id}/discounts")
     public ResponseEntity<?> createDiscountByShopHandler(
             @PathVariable String id,
@@ -221,7 +222,7 @@ public class ShopController {
     }
 
     @PatchMapping("/discounts/{id}")
-    public ResponseEntity<?> updateDiscountByShopHandler(@PathVariable String id, UpdateDiscountRequest request) throws BadRequestException {
+    public ResponseEntity<?> updateDiscountByShopHandler(@PathVariable String id, @RequestBody UpdateDiscountRequest request) throws BadRequestException {
         APISuccessResponse<?> response = APISuccessResponse.builder()
                 .message("Success")
                 .data(this.discountService.updateDiscount(id, request))
