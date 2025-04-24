@@ -1,6 +1,7 @@
 package com.tpt.capstone_ecommerce.ecommerce.redis.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tpt.capstone_ecommerce.ecommerce.dto.request.OrderRedisDTO;
 import com.tpt.capstone_ecommerce.ecommerce.dto.request.PaymentRequest;
 import com.tpt.capstone_ecommerce.ecommerce.entity.Order;
 import com.tpt.capstone_ecommerce.ecommerce.enums.CURRENCY;
@@ -36,38 +37,42 @@ public class PaymentConsumerService extends ConsumerService implements StreamCon
 
     @Override
     public void consume(String streamName, String consumerGroup, String consumerName) throws JedisException {
-        try(Jedis jedis = jedisPool.getResource()) {
-            jedis.xgroupCreate(streamName, consumerGroup, new StreamEntryID("0-0"), true);
+        while (true) {
+            try(Jedis jedis = jedisPool.getResource()) {
+                ensureConsumerGroupExists(jedis, streamName, consumerGroup);
 
-            List<Map.Entry<byte[], List<StreamEntry>>> messages = super.readMessageFromStream(jedis, streamName, consumerGroup, consumerName);
+                List<Map.Entry<String, List<StreamEntry>>> messages = super.readMessageFromStream(jedis, streamName, consumerGroup, consumerName);
 
-            if (messages != null && !messages.isEmpty()) {
-                Map.Entry<byte[], List<StreamEntry>> latestMessage = messages.get(messages.size() - 1);
-                List<StreamEntry> entries = latestMessage.getValue();
-                if (entries != null && !entries.isEmpty()) {
-                    StreamEntry latestEntry = entries.get(entries.size() - 1);
-                    Map<String, String> fields = latestEntry.getFields();
-                    String orderJson = fields.get("order");
-                    Order order = objectMapper.readValue(orderJson, Order.class);
-                    String paymentMethod = fields.get("paymentMethod");
-                    String totalPrice = fields.get("totalPrice");
-                    String ipAddress = fields.get("ipAddress");
-                    String paymentThirdParty = fields.get("paymentThirdParty");
-                    if(paymentMethod != null && order != null) {
-                        if(paymentMethod.equals(PAYMENT_METHOD.CASH.name())) {
-                            paymentService.createPaymentCash(order);
-                        } else {
-                            this.paymentService.createPayment(
-                                      new PaymentRequest(BigDecimal.valueOf(Long.parseLong(totalPrice)), CURRENCY.VND.name(), ipAddress), order, paymentThirdParty
-                            );
-                            // realtime here
+                if (messages != null && !messages.isEmpty()) {
+                    Map.Entry<String, List<StreamEntry>> latestMessage = messages.get(messages.size() - 1);
+                    List<StreamEntry> entries = latestMessage.getValue();
+                    if (entries != null && !entries.isEmpty()) {
+                        StreamEntry latestEntry = entries.get(entries.size() - 1);
+                        Map<String, String> fields = latestEntry.getFields();
+                        String orderJson = fields.get("order");
+                        OrderRedisDTO order = objectMapper.readValue(orderJson, OrderRedisDTO.class);
+                        String paymentMethod = fields.get("paymentMethod");
+                        String totalPrice = fields.get("totalPrice");
+                        String ipAddress = fields.get("ipAddress");
+                        String paymentThirdParty = fields.get("paymentThirdParty");
+                        String orderId = fields.get("orderId");
+                        if(paymentMethod != null && order != null) {
+                            if(paymentMethod.equals(PAYMENT_METHOD.CASH.name())) {
+                                paymentService.createPaymentCash(orderId);
+                            } else {
+                                this.paymentService.createPayment(
+                                        new PaymentRequest(BigDecimal.valueOf(Long.parseLong(totalPrice)), CURRENCY.VND.name(), ipAddress), order.getOrderId(), paymentThirdParty
+                                );
+                                // realtime here
+                            }
+                            jedis.xack(streamName, consumerGroup, latestEntry.getID());
                         }
-                        jedis.xack(streamName, consumerGroup, latestEntry.getID());
                     }
                 }
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new RuntimeException(e);
             }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
         }
     }
 }

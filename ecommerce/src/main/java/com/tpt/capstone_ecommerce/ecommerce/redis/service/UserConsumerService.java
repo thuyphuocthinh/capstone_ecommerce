@@ -34,25 +34,29 @@ public class UserConsumerService extends ConsumerService implements StreamConsum
 
     @Override
     public void consume(String streamName, String consumerGroup, String consumerName) throws JedisException {
-        try(Jedis jedis = jedisPool.getResource()) {
-            List<Map.Entry<byte[], List<StreamEntry>>> messages = super.readMessageFromStream(jedis, streamName, consumerGroup, consumerName);
-            if (messages != null && !messages.isEmpty()) {
-                Map.Entry<byte[], List<StreamEntry>> latestMessage = messages.get(messages.size() - 1);
-                List<StreamEntry> entries = latestMessage.getValue();
-                if (entries != null && !entries.isEmpty()) {
-                    StreamEntry latestEntry = entries.get(entries.size() - 1);
-                    Map<String, String> fields = latestEntry.getFields();
-                    String orderId = fields.get("orderId");
-                    String userId = fields.get("userId");
-                    NOTIFICATION_TYPE type = NOTIFICATION_TYPE.valueOf(fields.get("notificationType"));
-                    User findUser = this.userRepository.findById(userId)
-                            .orElseThrow(() -> new NotFoundException(UserErrorConstant.USER_NOT_FOUND));
+        while(true) {
+            try(Jedis jedis = jedisPool.getResource()) {
+                ensureConsumerGroupExists(jedis, streamName, consumerGroup);
+                List<Map.Entry<String, List<StreamEntry>>> messages = super.readMessageFromStream(jedis, streamName, consumerGroup, consumerName);
+                if (messages != null && !messages.isEmpty()) {
+                    Map.Entry<String, List<StreamEntry>> latestMessage = messages.get(messages.size() - 1);
+                    List<StreamEntry> entries = latestMessage.getValue();
+                    if (entries != null && !entries.isEmpty()) {
+                        StreamEntry latestEntry = entries.get(entries.size() - 1);
+                        Map<String, String> fields = latestEntry.getFields();
+                        String orderId = fields.get("orderId");
+                        String userId = fields.get("userId");
+                        NOTIFICATION_TYPE type = NOTIFICATION_TYPE.valueOf(fields.get("notificationType"));
+                        User findUser = this.userRepository.findById(userId)
+                                .orElseThrow(() -> new NotFoundException(UserErrorConstant.USER_NOT_FOUND));
 
-                    this.notificationService.addNewNotificationForUser(findUser.getEmail(), orderId, type, NotificationConstant.ORDER_CANCELED);
+                        this.notificationService.addNewNotificationForUser(findUser.getEmail(), orderId, type, NotificationConstant.ORDER_CANCELED);
+                    }
                 }
+            } catch (BadRequestException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e);
             }
-        } catch (BadRequestException e) {
-            throw new RuntimeException(e);
         }
     }
 }

@@ -8,10 +8,10 @@ import com.tpt.capstone_ecommerce.ecommerce.entity.Order;
 import com.tpt.capstone_ecommerce.ecommerce.exception.NotFoundException;
 
 public interface PaymentService {
-    PaymentResponse createPayment(PaymentRequest paymentRequest, Order order, String paymentThirdParty) throws Exception;
+    PaymentResponse createPayment(PaymentRequest paymentRequest, String orderId, String paymentThirdParty) throws Exception;
     void updatePaymentStatusAndTransactionIdByOrderId(String orderId, String status, String transactionId) throws NotFoundException;
     String getPaymentStatus(String orderId) throws NotFoundException;
-    void createPaymentCash(Order order);
+    void createPaymentCash(String orderId);
     void updatePaymentCash(Order order) throws NotFoundException;
     RetryPaymentResponse retryOnlinePaymentHandler(RetryPaymentRequest request, String ipAddress) throws Exception;
 }

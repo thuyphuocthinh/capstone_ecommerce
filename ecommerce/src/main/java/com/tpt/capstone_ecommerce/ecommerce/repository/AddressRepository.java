@@ -13,7 +13,11 @@ import java.util.Optional;
 
 @Repository
 public interface AddressRepository extends JpaRepository<Address, String> {
-    @Query(value = "SELECT * FROM addresses WHERE user_id = ?1", nativeQuery = true)
+    @Query(
+            value = "SELECT * FROM addresses WHERE user_id = ?1",
+            countQuery = "SELECT COUNT(*) FROM addresses WHERE user_id = ?1",
+            nativeQuery = true
+    )
     Page<Address> findAllByUser(String userId, Pageable pageable);
 
     @Query(value = "SELECT * FROM addresses WHERE phone = :phone LIMIT 1", nativeQuery = true)

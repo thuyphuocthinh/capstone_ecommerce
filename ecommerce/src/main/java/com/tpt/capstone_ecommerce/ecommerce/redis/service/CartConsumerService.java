@@ -28,29 +28,31 @@ public class CartConsumerService extends ConsumerService implements StreamConsum
 
     @Override
     public void consume(String streamName, String consumerGroup, String consumerName) throws JedisException {
-        try(Jedis jedis = jedisPool.getResource()) {
+        while(true) {
+            try(Jedis jedis = jedisPool.getResource()) {
+                ensureConsumerGroupExists(jedis, streamName, consumerGroup);
 
-            jedis.xgroupCreate(streamName, consumerGroup, new StreamEntryID("0-0"), true);
+                List<Map.Entry<String, List<StreamEntry>>> messages = super.readMessageFromStream(jedis, streamName, consumerGroup, consumerName);
 
-            List<Map.Entry<byte[], List<StreamEntry>>> messages = super.readMessageFromStream(jedis, streamName, consumerGroup, consumerName);
-
-            if (messages != null && !messages.isEmpty()) {
-                Map.Entry<byte[], List<StreamEntry>> latestMessage = messages.get(messages.size() - 1);
-                List<StreamEntry> entries = latestMessage.getValue();
-                if (entries != null && !entries.isEmpty()) {
-                    StreamEntry latestEntry = entries.get(entries.size() - 1);
-                    Map<String, String> fields = latestEntry.getFields();
-                    String orderItemIds = fields.get("orderItemIds");
-                    String cartId = fields.get("cartId");
-                    if(orderItemIds != null && !orderItemIds.isEmpty()){
-                        cartService.clearCart(cartId, List.of(orderItemIds.split(",")));
-                        jedis.xack(streamName, consumerGroup, latestEntry.getID());
+                if (messages != null && !messages.isEmpty()) {
+                    Map.Entry<String, List<StreamEntry>> latestMessage = messages.get(messages.size() - 1);
+                    List<StreamEntry> entries = latestMessage.getValue();
+                    if (entries != null && !entries.isEmpty()) {
+                        StreamEntry latestEntry = entries.get(entries.size() - 1);
+                        Map<String, String> fields = latestEntry.getFields();
+                        String orderItemIds = fields.get("orderItemIds");
+                        String cartId = fields.get("cartId");
+                        if(orderItemIds != null && !orderItemIds.isEmpty()){
+                            cartService.clearCart(cartId, List.of(orderItemIds.split(",")));
+                            jedis.xack(streamName, consumerGroup, latestEntry.getID());
+                        }
                     }
                 }
-            }
 
-        } catch (BadRequestException e) {
-            throw new RuntimeException(e);
+            } catch (BadRequestException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e);
+            }
         }
     }
 }

@@ -2,6 +2,7 @@ package com.tpt.capstone_ecommerce.ecommerce.redis.manager;
 
 import com.tpt.capstone_ecommerce.ecommerce.redis.repository.StreamConsumer;
 import com.tpt.capstone_ecommerce.ecommerce.redis.utils.RedisSchema;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -19,7 +20,8 @@ public class EmailConsumerManager {
         this.streamConsumer = streamConsumer;
     }
 
-    @Scheduled(fixedRate = 60000)
+    @Scheduled(fixedRate = 1000)
+    @PostConstruct
     public void checkAndStartConsumer() {
         if (!isRunning) {
             isRunning = true;

@@ -1,5 +1,6 @@
 package com.tpt.capstone_ecommerce.ecommerce.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.tpt.capstone_ecommerce.ecommerce.enums.USER_STATUS;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
@@ -63,9 +64,11 @@ public class User {
     private List<Role> roles;
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<Address> addresses = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<Order> orders = new ArrayList<>();
 
     @OneToOne(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)

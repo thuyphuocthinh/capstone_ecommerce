@@ -5,6 +5,7 @@ import com.tpt.capstone_ecommerce.ecommerce.enums.PAYMENT_STATUS;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -33,12 +34,12 @@ public class Payment {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, name = "payment_method", length = 15)
-    @NotBlank(message = "Payment method cannot be blank")
+    @NotNull(message = "Payment method cannot be blank")
     private PAYMENT_METHOD paymentMethod = PAYMENT_METHOD.CASH;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, name = "payment_status", length = 15)
-    @NotBlank(message = "Payment method cannot be blank")
+    @NotNull(message = "Payment method cannot be blank")
     private PAYMENT_STATUS paymentStatus = PAYMENT_STATUS.PENDING;
 
     @Column(nullable = false, name = "total_price")
