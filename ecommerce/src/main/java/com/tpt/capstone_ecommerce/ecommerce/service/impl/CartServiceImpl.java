@@ -182,13 +182,14 @@ public class CartServiceImpl implements CartService {
         Cart findCart = this.cartRepository.findById(cartId)
                 .orElseThrow(() -> new NotFoundException(CartErrorConstant.CART_NOT_FOUND));
 
-        String currentUserId = SecurityUtils.getCurrentUserId();
-        if(!currentUserId.equals(findCart.getUser().getId())) {
-            throw new BadRequestException(AuthConstantError.NOT_ALLOWED_TO_ACCESS_RESOURCE);
-        }
+        /*
+            String currentUserId = SecurityUtils.getCurrentUserId();
+            if(!currentUserId.equals(findCart.getUser().getId())) {
+                throw new BadRequestException(AuthConstantError.NOT_ALLOWED_TO_ACCESS_RESOURCE);
+            }
+        */
 
         List<CartItem> cartItemsPurchased = this.cartItemRepository.findAllById(listOfCartItemIds);
-
         List<CartItem> cartItems = findCart.getCartItems();
 
         double totalPrice = cartItemsPurchased.stream().mapToDouble(CartItem::getTotalPrice).sum();

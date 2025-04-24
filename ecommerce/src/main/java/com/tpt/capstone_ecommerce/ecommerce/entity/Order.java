@@ -1,5 +1,6 @@
 package com.tpt.capstone_ecommerce.ecommerce.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.tpt.capstone_ecommerce.ecommerce.enums.ORDER_STATUS;
 import com.tpt.capstone_ecommerce.ecommerce.enums.PAYMENT_METHOD;
 import com.tpt.capstone_ecommerce.ecommerce.enums.USER_STATUS;
@@ -59,9 +60,11 @@ public class Order {
 
     @ManyToOne
     @JoinColumn(nullable = false, name = "address_id")
+    @JsonIgnore
     private Address address;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @JsonIgnore
     private List<OrderItem> orderItems = new ArrayList<>();
 
     @Column(nullable = false, name = "created_at", updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")

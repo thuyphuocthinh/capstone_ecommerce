@@ -28,30 +28,33 @@ public class EmailConsumerService extends ConsumerService implements StreamConsu
 
     @Override
     public void consume(String streamName, String consumerGroup, String consumerName) throws JedisException {
-        try(Jedis jedis = jedisPool.getResource()) {
-            jedis.xgroupCreate(streamName, consumerGroup, new StreamEntryID("0-0"), true);
+        while(true) {
+            try(Jedis jedis = jedisPool.getResource()) {
+                ensureConsumerGroupExists(jedis, streamName, consumerGroup);
 
-            List<Map.Entry<byte[], List<StreamEntry>>> messages = super.readMessageFromStream(jedis, streamName, consumerGroup, consumerName);
+                List<Map.Entry<String, List<StreamEntry>>> messages = super.readMessageFromStream(jedis, streamName, consumerGroup, consumerName);
 
-            if (messages != null && !messages.isEmpty()) {
-                Map.Entry<byte[], List<StreamEntry>> latestMessage = messages.get(messages.size() - 1);
-                List<StreamEntry> entries = latestMessage.getValue();
-                if (entries != null && !entries.isEmpty()) {
-                    StreamEntry latestEntry = entries.get(entries.size() - 1);
-                    Map<String, String> fields = latestEntry.getFields();
+                if (messages != null && !messages.isEmpty()) {
+                    Map.Entry<String, List<StreamEntry>> latestMessage =  messages.get(messages.size() - 1);
+                    List<StreamEntry> entries = latestMessage.getValue();
+                    if (entries != null && !entries.isEmpty()) {
+                        StreamEntry latestEntry = entries.get(entries.size() - 1);
+                        Map<String, String> fields = latestEntry.getFields();
 
-                    String orderId = fields.get("orderId");
-                    String totalPrice = fields.get("totalPrice");
-                    String email = fields.get("email");
-                    if(orderId != null && totalPrice != null && email != null){
-                        String template = Template.getOtpHtmlTemplateOrder(orderId, totalPrice);
-                        emailService.sendEmailWithHtml(email, "ORDER SUCCESS", template);
-                        jedis.xack(streamName, consumerGroup, latestEntry.getID());
+                        String orderId = fields.get("orderId");
+                        String totalPrice = fields.get("totalPrice");
+                        String email = fields.get("email");
+                        if(orderId != null && totalPrice != null && email != null){
+                            String template = Template.getOtpHtmlTemplateOrder(orderId, totalPrice);
+                            emailService.sendEmailWithHtml(email, "ORDER SUCCESS", template);
+                            jedis.xack(streamName, consumerGroup, latestEntry.getID());
+                        }
                     }
                 }
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new RuntimeException(e);
             }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
         }
     }
 }

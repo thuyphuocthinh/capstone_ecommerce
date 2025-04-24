@@ -13,6 +13,14 @@ public class RedisSchema {
         return RedisKeyHelper.getKey("cartConsumerName");
     }
 
+    public static String getUserConsumerGroup() {
+        return RedisKeyHelper.getKey("userConsumerGroup");
+    }
+
+    public static String getUserConsumerName() {
+        return RedisKeyHelper.getKey("userConsumerName");
+    }
+
     public static String getEmailConsumerGroup() {
         return RedisKeyHelper.getKey("emailConsumerGroup");
     }
@@ -33,7 +41,6 @@ public class RedisSchema {
         return RedisKeyHelper.getKey("shopConsumerGroup");
     }
 
-
     public static String getShopConsumerName() {
         return RedisKeyHelper.getKey("shopConsumerName");
     }
@@ -49,8 +56,4 @@ public class RedisSchema {
     public static String getBrandKey() {
         return RedisKeyHelper.getKey("brand");
     }
-
-    // public static String getAccessTokenKey(String userId, String timestamp) {
-    //    return RedisKeyHelper.getKey("accessToken:" + userId + ":" + timestamp);
-    //}
 }

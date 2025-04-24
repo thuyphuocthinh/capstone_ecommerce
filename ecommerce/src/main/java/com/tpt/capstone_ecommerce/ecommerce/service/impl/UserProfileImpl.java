@@ -232,16 +232,18 @@ public class UserProfileImpl implements UserService {
     public UserAddressDetailResponse getUserAddressDetail(String addressId) throws NotFoundException {
         Address address = this.addressRepository.findById(addressId).orElseThrow(() -> new NotFoundException(AddressErrorConstant.ADDRESS_NOT_FOUND));
 
+        log.info("address: {}", address.getFullName());
         List<String> listLocationIds = this.locationService.getLocationAllIds(address.getLocation().getId());
+        log.info("listLocationIds: {}", listLocationIds);
 
         return UserAddressDetailResponse.builder()
                 .id(addressId)
                 .phone(address.getPhone())
                 .fullName(address.getFullName())
                 .specificAddress(address.getSpecificAddress())
-                .locationProvinceId(listLocationIds.get(2))
-                .locationDistrictId(listLocationIds.get(1))
-                .locationWardId(listLocationIds.get(0))
+                .locationProvinceId(listLocationIds.get(1))
+                .locationDistrictId(listLocationIds.get(0))
+                .locationWardId(address.getLocation().getId())
                 .build();
     }
 

@@ -39,7 +39,9 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public PaymentResponse createPayment(PaymentRequest paymentRequest, Order order, String paymentThirdParty) throws Exception {
+    public PaymentResponse createPayment(PaymentRequest paymentRequest, String orderId, String paymentThirdParty) throws Exception {
+        Order order = this.orderRepository.findById(orderId)
+                .orElseThrow(() -> new NotFoundException(OrderErrorConstant.ORDER_NOT_FOUND));
         Payment payment = Payment.builder()
                 .paymentMethod(PAYMENT_METHOD.BANKING)
                 .order(order)
@@ -70,7 +72,9 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public void createPaymentCash(Order order) {
+    public void createPaymentCash(String orderId) {
+        Order order = this.orderRepository.findById(orderId)
+                .orElseThrow(() -> new NotFoundException(OrderErrorConstant.ORDER_NOT_FOUND));
         Payment payment = Payment.builder()
                 .paymentMethod(PAYMENT_METHOD.CASH)
                 .order(order)

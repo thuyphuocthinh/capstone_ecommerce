@@ -3,6 +3,7 @@ package com.tpt.capstone_ecommerce.ecommerce.service.impl;
 import com.tpt.capstone_ecommerce.ecommerce.constant.*;
 import com.tpt.capstone_ecommerce.ecommerce.dto.request.CheckoutOrderRequest;
 import com.tpt.capstone_ecommerce.ecommerce.dto.request.OrderDiscount;
+import com.tpt.capstone_ecommerce.ecommerce.dto.request.OrderRedisDTO;
 import com.tpt.capstone_ecommerce.ecommerce.dto.request.PlaceOrderRequest;
 import com.tpt.capstone_ecommerce.ecommerce.dto.response.*;
 import com.tpt.capstone_ecommerce.ecommerce.entity.*;
@@ -228,10 +229,12 @@ public class OrderServiceImpl implements OrderService {
             throw new BadRequestException(PaymenErrorConstant.INVALID_PAYMENT_METHOD);
         }
 
-        try {
-            PAYMENT_THIRD_PARTIES.valueOf(paymentThirdParty);
-        } catch (IllegalArgumentException e) {
-            throw new BadRequestException(PaymenErrorConstant.INVALID_PAYMENT_THIRD_PARTY);
+        if(paymentThirdParty != null) {
+            try {
+                PAYMENT_THIRD_PARTIES.valueOf(paymentThirdParty);
+            } catch (IllegalArgumentException e) {
+                throw new BadRequestException(PaymenErrorConstant.INVALID_PAYMENT_THIRD_PARTY);
+            }
         }
 
         // Save order
@@ -253,11 +256,23 @@ public class OrderServiceImpl implements OrderService {
             orderItem.setOrder(savedOrder);
         }
 
+        log.info("set order items");
         savedOrder.setOrderItems(orderItemsList);
+        log.info("save order items");
         savedOrder = orderRepository.save(order);
+        log.info("save order");
 
         // stream for cart, payment, email
-        this.orderStreamPublisher.publishOrderSuccess(savedOrder, orderItemIds, ipAddress, paymentThirdParty);
+        OrderRedisDTO orderRedisDTO = OrderRedisDTO.builder()
+                .orderId(savedOrder.getId())
+                .userEmail(findUser.getEmail())
+                .paymentMethod(savedOrder.getPaymentMethod().name())
+                .totalPrice(savedOrder.getTotalPrice())
+                .cartId(findUser.getCart().getId())
+                .userId(findUser.getId())
+                .build();
+        log.info("order redis dto: {} ", orderRedisDTO);
+        this.orderStreamPublisher.publishOrderSuccess(orderRedisDTO, orderItemIds, ipAddress, paymentThirdParty != null ? paymentThirdParty : "NO THIRD PARTY");
         // pub-sub for notification
 
         return PlaceOrderResponse.builder()
