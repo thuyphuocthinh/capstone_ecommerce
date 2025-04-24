@@ -18,6 +18,7 @@ import com.tpt.capstone_ecommerce.ecommerce.repository.UserRepository;
 import com.tpt.capstone_ecommerce.ecommerce.service.NotificationService;
 import com.tpt.capstone_ecommerce.ecommerce.utils.SecurityUtils;
 import com.tpt.capstone_ecommerce.ecommerce.utils.WebSocketUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.BadRequestException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -28,6 +29,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
+@Slf4j
 public class NotificationServiceImpl implements NotificationService {
 
     private final NotificationRepository notificationRepository;
@@ -56,7 +58,7 @@ public class NotificationServiceImpl implements NotificationService {
         }
 
         Pageable pageRequest = PageRequest.of(Math.max(0, pageNumber - 1), pageSize);
-        Page<Notification> notificationPage = this.notificationRepository.findAllByUserId(findUser, pageRequest);
+        Page<Notification> notificationPage = this.notificationRepository.findAllByUserId(findUser.getId(), pageRequest);
         List<Notification> notificationList = notificationPage.getContent();
 
         List<NotificationDetailResponse> notificationDetailResponses = notificationList.stream().map(notification -> {
@@ -68,6 +70,8 @@ public class NotificationServiceImpl implements NotificationService {
                     .userId(findUser.getId())
                     .build();
         }).toList();
+
+        log.info("notification responses: {}", notificationDetailResponses);
 
         PaginationMetadata paginationMetadata = PaginationMetadata.builder()
                 .currentPage(notificationPage.getNumber() + 1)
