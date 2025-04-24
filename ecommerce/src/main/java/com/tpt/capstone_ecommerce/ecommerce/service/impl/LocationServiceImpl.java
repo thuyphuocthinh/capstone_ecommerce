@@ -137,7 +137,7 @@ public class LocationServiceImpl implements LocationService {
                 .type(location.getType().name())
                 .name(location.getName())
                 .id(location.getId())
-                .parentId(null)
+                .parentId(location.getParentId())
                 .build()).toList();
     }
 
@@ -150,7 +150,7 @@ public class LocationServiceImpl implements LocationService {
                 .type(location.getType().name())
                 .name(location.getName())
                 .id(location.getId())
-                .parentId(null)
+                .parentId(location.getParentId())
                 .build()).toList();
     }
 }
