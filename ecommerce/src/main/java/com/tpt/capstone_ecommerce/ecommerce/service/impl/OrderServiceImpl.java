@@ -22,6 +22,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -272,9 +274,16 @@ public class OrderServiceImpl implements OrderService {
                 .userId(findUser.getId())
                 .build();
         log.info("order redis dto: {} ", orderRedisDTO);
-        this.orderStreamPublisher.publishOrderSuccess(orderRedisDTO, orderItemIds, ipAddress, paymentThirdParty != null ? paymentThirdParty : "NO THIRD PARTY");
-        // pub-sub for notification
 
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                orderStreamPublisher.publishOrderSuccess(orderRedisDTO, orderItemIds, ipAddress,
+                        paymentThirdParty != null ? paymentThirdParty : "NO THIRD PARTY");
+            }
+        });
+
+        // pub-sub for notification
         return PlaceOrderResponse.builder()
                 .orderId(savedOrder.getId())
                 .orderStatus(savedOrder.getStatus().name())
@@ -353,7 +362,12 @@ public class OrderServiceImpl implements OrderService {
             skuRepository.save(sku);
         }
 
-        this.orderStreamPublisher.publishOrderFailed(orderId, shopIds);
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                orderStreamPublisher.publishOrderFailed(orderId, shopIds);
+            }
+        });
 
         return "Success";
     }
