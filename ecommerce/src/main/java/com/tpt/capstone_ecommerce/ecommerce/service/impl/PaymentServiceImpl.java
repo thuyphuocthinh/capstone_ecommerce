@@ -18,12 +18,14 @@ import com.tpt.capstone_ecommerce.ecommerce.repository.OrderRepository;
 import com.tpt.capstone_ecommerce.ecommerce.repository.PaymentRepository;
 import com.tpt.capstone_ecommerce.ecommerce.service.PaymentService;
 import com.tpt.capstone_ecommerce.ecommerce.service.factory.PaymentServiceFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.BadRequestException;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 
 @Service
+@Slf4j
 public class PaymentServiceImpl implements PaymentService {
 
     private final PaymentServiceFactory paymentServiceFactory;
@@ -73,6 +75,7 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public void createPaymentCash(String orderId) {
+        log.info("order id {}", orderId);
         Order order = this.orderRepository.findById(orderId)
                 .orElseThrow(() -> new NotFoundException(OrderErrorConstant.ORDER_NOT_FOUND));
         Payment payment = Payment.builder()
@@ -90,7 +93,6 @@ public class PaymentServiceImpl implements PaymentService {
 
         payment.setPaymentStatus(PAYMENT_STATUS.SUCCESS);
         this.paymentRepository.save(payment);
-
     }
 
     @Override
