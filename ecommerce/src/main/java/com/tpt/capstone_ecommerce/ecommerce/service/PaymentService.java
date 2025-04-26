@@ -14,4 +14,5 @@ public interface PaymentService {
     void createPaymentCash(String orderId);
     void updatePaymentCash(Order order) throws NotFoundException;
     RetryPaymentResponse retryOnlinePaymentHandler(RetryPaymentRequest request, String ipAddress) throws Exception;
+    String updatePaymentStatusByOrderId(String orderId) throws NotFoundException;
 }
