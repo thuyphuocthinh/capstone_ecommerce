@@ -11,7 +11,7 @@ public interface AuthService {
     LoginResponse loginService(LoginRequest loginRequest, String ipAddress, String userAgent);
     RegisterResponse registerService(RegisterRequest registerRequest) throws MessagingException, IOException;
     TokenResponse refreshTokenService(RefreshTokenRequest refreshTokenRequest);
-    LogoutResponse logoutService(LogoutRequest logoutRequest);
+    LogoutResponse logoutService(LogoutRequest logoutRequest, String accessToken);
     TokenResponse verifyEmailServiceForAuth(String otp, String ipAddress, String userAgent);
     EmailResponse forgotPasswordSendOtpService(ForgotPasswordRequest forgotPasswordRequest) throws IOException, MessagingException;
     String verifyOtpForResetPasswordService(String otp);

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.auth.oauth2.TokenVerifier;
 import com.tpt.capstone_ecommerce.ecommerce.auth.oauth.OauthProvider;
+import com.tpt.capstone_ecommerce.ecommerce.constant.HttpRequestConstant;
 import com.tpt.capstone_ecommerce.ecommerce.dto.request.*;
 import com.tpt.capstone_ecommerce.ecommerce.dto.response.APISuccessResponse;
 import com.tpt.capstone_ecommerce.ecommerce.dto.response.LoginResponse;
@@ -158,9 +159,13 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<?> logoutHandler(@Valid @RequestBody LogoutRequest logoutRequest) {
+    public ResponseEntity<?> logoutHandler(
+            @Valid @RequestBody LogoutRequest logoutRequest,
+            @RequestHeader(HttpRequestConstant.REQUEST_AUTHORIZATION) String bearerToken
+    ) {
+        String accessToken = bearerToken.substring(7);
         APISuccessResponse<Object> response = APISuccessResponse.builder()
-                .data(this.authService.logoutService(logoutRequest))
+                .data(this.authService.logoutService(logoutRequest, accessToken))
                 .message("Success")
                 .build();
         return new ResponseEntity<>(response, HttpStatus.OK);

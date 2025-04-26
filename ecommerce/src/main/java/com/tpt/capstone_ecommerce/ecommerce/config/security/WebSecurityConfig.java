@@ -1,6 +1,7 @@
 package com.tpt.capstone_ecommerce.ecommerce.config.security;
 
 import com.tpt.capstone_ecommerce.ecommerce.auth.jwt.JwtFilter;
+import com.tpt.capstone_ecommerce.ecommerce.redis.repository.CacheBlacklist;
 import com.tpt.capstone_ecommerce.ecommerce.service.impl.CustomUserDetailsService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.context.annotation.Bean;
@@ -30,9 +31,12 @@ public class WebSecurityConfig {
 
     private final CustomUserDetailsService userDetailsService;
 
-    public WebSecurityConfig(CustomAuthenticationEntryPoint authenticationEntryPoint, CustomUserDetailsService userDetailsService) {
+    private final CacheBlacklist cacheBlacklist;
+
+    public WebSecurityConfig(CustomAuthenticationEntryPoint authenticationEntryPoint, CustomUserDetailsService userDetailsService, CacheBlacklist cacheBlacklist) {
         this.authenticationEntryPoint = authenticationEntryPoint;
         this.userDetailsService = userDetailsService;
+        this.cacheBlacklist = cacheBlacklist;
     }
 
     @Bean
@@ -49,7 +53,7 @@ public class WebSecurityConfig {
 
     @Bean
     public JwtFilter jwtFilter() {
-        return new JwtFilter(userDetailsService);
+        return new JwtFilter(userDetailsService, cacheBlacklist);
     }
 
     @Bean
