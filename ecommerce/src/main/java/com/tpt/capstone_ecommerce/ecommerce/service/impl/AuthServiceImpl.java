@@ -10,6 +10,7 @@ import com.tpt.capstone_ecommerce.ecommerce.enums.USER_ROLE;
 import com.tpt.capstone_ecommerce.ecommerce.enums.USER_STATUS;
 import com.tpt.capstone_ecommerce.ecommerce.exception.NotFoundException;
 import com.tpt.capstone_ecommerce.ecommerce.exception.UserStatusException;
+import com.tpt.capstone_ecommerce.ecommerce.redis.repository.CacheBlacklist;
 import com.tpt.capstone_ecommerce.ecommerce.repository.*;
 import com.tpt.capstone_ecommerce.ecommerce.service.AuthService;
 import com.tpt.capstone_ecommerce.ecommerce.service.EmailService;
@@ -58,10 +59,12 @@ public class AuthServiceImpl implements AuthService {
 
     private final AuthProviderRepository authProviderRepository;
 
+    private final CacheBlacklist cacheBlacklist;
+
     @Value("${jwt.refreshToken.expiration}")
     private int jwtRefreshTokenExpirationMs;
 
-    public AuthServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtProvider jwtProvider, CustomUserDetailsService customUserDetailsService, CartRepository cartRepository, EmailService emailService, TokenRepository tokenRepository, RoleRepository roleRepository, OtpService otpService, OtpRepository otpRepository, AuthProviderRepository authProviderRepository) {
+    public AuthServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtProvider jwtProvider, CustomUserDetailsService customUserDetailsService, CartRepository cartRepository, EmailService emailService, TokenRepository tokenRepository, RoleRepository roleRepository, OtpService otpService, OtpRepository otpRepository, AuthProviderRepository authProviderRepository, CacheBlacklist cacheBlacklist) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtProvider = jwtProvider;
@@ -73,6 +76,7 @@ public class AuthServiceImpl implements AuthService {
         this.otpService = otpService;
         this.otpRepository = otpRepository;
         this.authProviderRepository = authProviderRepository;
+        this.cacheBlacklist = cacheBlacklist;
     }
 
     @Override
@@ -193,10 +197,10 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public LogoutResponse logoutService(LogoutRequest logoutRequest) {
+    public LogoutResponse logoutService(LogoutRequest logoutRequest, String accessToken) {
         String refreshToken = logoutRequest.getRefreshToken();
         Token verify = this.jwtProvider.verifyRefreshToken(refreshToken);
-
+        this.cacheBlacklist.addNewAccessToken(accessToken);
         return LogoutResponse.builder()
                 .message(this.jwtProvider.revokeRefreshToken(refreshToken))
                 .build();

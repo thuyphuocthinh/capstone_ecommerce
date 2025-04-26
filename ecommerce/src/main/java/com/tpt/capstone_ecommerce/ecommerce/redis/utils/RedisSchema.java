@@ -45,6 +45,14 @@ public class RedisSchema {
         return RedisKeyHelper.getKey("shopConsumerName");
     }
 
+    public static String getBlacklistKey(String accessToken) {
+        return RedisKeyHelper.getKey("blacklist:" + accessToken);
+    }
+
+    public static String getBlacklistPrefix() {
+        return RedisKeyHelper.getKey("blacklist");
+    }
+
     public static String getCategoryKey() {
         return RedisKeyHelper.getKey("category");
     }

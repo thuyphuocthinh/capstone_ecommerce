@@ -3,6 +3,7 @@ package com.tpt.capstone_ecommerce.ecommerce.auth.jwt;
 import com.tpt.capstone_ecommerce.ecommerce.constant.JwtConstant;
 import com.tpt.capstone_ecommerce.ecommerce.constant.UserErrorConstant;
 import com.tpt.capstone_ecommerce.ecommerce.entity.CustomUserDetails;
+import com.tpt.capstone_ecommerce.ecommerce.redis.repository.CacheBlacklist;
 import com.tpt.capstone_ecommerce.ecommerce.service.impl.CustomUserDetailsService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -40,8 +41,11 @@ public class JwtFilter extends OncePerRequestFilter {
 
     private final CustomUserDetailsService customUserDetailsService;
 
-    public JwtFilter(CustomUserDetailsService customUserDetailsService) {
+    private final CacheBlacklist cacheBlacklist;
+
+    public JwtFilter(CustomUserDetailsService customUserDetailsService, CacheBlacklist cacheBlacklist) {
         this.customUserDetailsService = customUserDetailsService;
+        this.cacheBlacklist = cacheBlacklist;
     }
 
     @Override
@@ -68,6 +72,14 @@ public class JwtFilter extends OncePerRequestFilter {
                 List<GrantedAuthority> authorityList = roles.stream()
                         .map(role -> new SimpleGrantedAuthority("ROLE_" + role)) // Thêm "ROLE_" vào trước role
                         .collect(Collectors.toList());
+                // CHECK BLACKLIST
+                boolean isLogout = this.cacheBlacklist.findAccessToken(jwt);
+                if (isLogout) {
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    response.setContentType("application/json");
+                    response.getWriter().write("{\"status\": \"error\", \"message\": \"Invalid access token\"}");
+                    return;
+                }
                 // CREATE AN AUTHENTICATION
                 CustomUserDetails userDetails = (CustomUserDetails) customUserDetailsService.loadUserByUsername(email); // Tải từ DB nếu cần
                 UsernamePasswordAuthenticationToken authentication =
