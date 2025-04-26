@@ -5,7 +5,9 @@ import com.tpt.capstone_ecommerce.ecommerce.constant.HttpRequestConstant;
 import com.tpt.capstone_ecommerce.ecommerce.dto.request.CheckoutOrderRequest;
 import com.tpt.capstone_ecommerce.ecommerce.dto.request.PlaceOrderRequest;
 import com.tpt.capstone_ecommerce.ecommerce.dto.response.APISuccessResponse;
+import com.tpt.capstone_ecommerce.ecommerce.exception.NotFoundException;
 import com.tpt.capstone_ecommerce.ecommerce.service.OrderService;
+import com.tpt.capstone_ecommerce.ecommerce.service.PaymentService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.apache.coyote.BadRequestException;
@@ -20,10 +22,13 @@ import java.util.Optional;
 public class OrderController {
     private final OrderService orderService;
 
+    private final PaymentService paymentService;
+
     private final JwtProvider jwtProvider;
 
-    public OrderController(OrderService orderService, JwtProvider jwtProvider) {
+    public OrderController(OrderService orderService, PaymentService paymentService, JwtProvider jwtProvider) {
         this.orderService = orderService;
+        this.paymentService = paymentService;
         this.jwtProvider = jwtProvider;
     }
 
@@ -58,6 +63,15 @@ public class OrderController {
         APISuccessResponse<?> apiSuccessResponse = APISuccessResponse.builder()
                 .message("Success")
                 .data(this.orderService.placeOrder(email, placeOrderRequest, ip))
+                .build();
+        return new ResponseEntity<>(apiSuccessResponse, HttpStatus.OK);
+    }
+
+    @GetMapping("/payments")
+    public ResponseEntity<?> updatePaymentByOrder(@RequestParam(name = "order_id") String orderId) throws NotFoundException {
+        APISuccessResponse<?> apiSuccessResponse = APISuccessResponse.builder()
+                .message("Success")
+                .data(this.paymentService.updatePaymentStatusByOrderId(orderId))
                 .build();
         return new ResponseEntity<>(apiSuccessResponse, HttpStatus.OK);
     }

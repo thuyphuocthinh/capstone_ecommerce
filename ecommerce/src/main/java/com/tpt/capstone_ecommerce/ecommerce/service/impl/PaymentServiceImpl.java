@@ -109,4 +109,15 @@ public class PaymentServiceImpl implements PaymentService {
                 .redirectUrl(paymentResponse.getRedirectUrl())
                 .build();
     }
+
+    @Override
+    public String updatePaymentStatusByOrderId(String orderId) throws NotFoundException {
+        Order order = this.orderRepository.findById(orderId)
+                .orElseThrow(() -> new NotFoundException(OrderErrorConstant.ORDER_NOT_FOUND));
+        Payment findByOrderId = this.paymentRepository.findByOrderId(orderId)
+                .orElseThrow(() -> new NotFoundException(PaymentErrorConstant.PAYMENT_NOT_FOUND));
+        findByOrderId.setPaymentStatus(PAYMENT_STATUS.SUCCESS);
+        this.paymentRepository.save(findByOrderId);
+        return "Success";
+    }
 }

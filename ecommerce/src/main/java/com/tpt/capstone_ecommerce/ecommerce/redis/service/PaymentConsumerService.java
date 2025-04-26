@@ -3,12 +3,18 @@ package com.tpt.capstone_ecommerce.ecommerce.redis.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tpt.capstone_ecommerce.ecommerce.dto.request.OrderRedisDTO;
 import com.tpt.capstone_ecommerce.ecommerce.dto.request.PaymentRequest;
+import com.tpt.capstone_ecommerce.ecommerce.dto.response.NotificationDetailResponse;
+import com.tpt.capstone_ecommerce.ecommerce.dto.response.PaymentRealtimeResponse;
+import com.tpt.capstone_ecommerce.ecommerce.dto.response.PaymentResponse;
 import com.tpt.capstone_ecommerce.ecommerce.entity.Order;
 import com.tpt.capstone_ecommerce.ecommerce.enums.CURRENCY;
 import com.tpt.capstone_ecommerce.ecommerce.enums.PAYMENT_METHOD;
 import com.tpt.capstone_ecommerce.ecommerce.redis.repository.StreamConsumer;
 import com.tpt.capstone_ecommerce.ecommerce.service.PaymentService;
+import com.tpt.capstone_ecommerce.ecommerce.utils.WebSocketUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
@@ -22,6 +28,7 @@ import java.util.Map;
 
 @Service
 @Qualifier(value = "paymentConsumerService")
+@Slf4j
 public class PaymentConsumerService extends ConsumerService implements StreamConsumer {
     private final JedisPool jedisPool;
 
@@ -29,10 +36,13 @@ public class PaymentConsumerService extends ConsumerService implements StreamCon
 
     private final PaymentService paymentService;
 
-    public PaymentConsumerService(JedisPool jedisPool, ObjectMapper objectMapper, PaymentService paymentService) {
+    private final SimpMessagingTemplate messagingTemplate;
+
+    public PaymentConsumerService(JedisPool jedisPool, ObjectMapper objectMapper, PaymentService paymentService, SimpMessagingTemplate messagingTemplate) {
         this.jedisPool = jedisPool;
         this.objectMapper = objectMapper;
         this.paymentService = paymentService;
+        this.messagingTemplate = messagingTemplate;
     }
 
     @Override
@@ -60,10 +70,20 @@ public class PaymentConsumerService extends ConsumerService implements StreamCon
                             if(paymentMethod.equals(PAYMENT_METHOD.CASH.name())) {
                                 paymentService.createPaymentCash(orderId);
                             } else {
-                                this.paymentService.createPayment(
-                                        new PaymentRequest(BigDecimal.valueOf(Long.parseLong(totalPrice)), CURRENCY.VND.name(), ipAddress), order.getOrderId(), paymentThirdParty
+                                PaymentResponse paymentResponse = this.paymentService.createPayment(
+                                        new PaymentRequest(new BigDecimal(totalPrice), CURRENCY.VND.name(), ipAddress), order.getOrderId(), paymentThirdParty
                                 );
+                                log.info("Payment response: {}", paymentResponse);
                                 // realtime here
+                                String destination = WebSocketUtil.getUserQueueDestination();
+                                messagingTemplate.convertAndSendToUser(
+                                        order.getUserEmail(),
+                                        destination,
+                                        PaymentRealtimeResponse.builder()
+                                                .paymentResponse(paymentResponse)
+                                                .userId(order.getUserId())
+                                                .build()
+                                );
                             }
                             jedis.xack(streamName, consumerGroup, latestEntry.getID());
                         }
