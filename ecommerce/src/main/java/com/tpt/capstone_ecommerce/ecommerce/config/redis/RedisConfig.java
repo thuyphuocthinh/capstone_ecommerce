@@ -1,5 +1,6 @@
 package com.tpt.capstone_ecommerce.ecommerce.config.redis;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import redis.clients.jedis.JedisPool;
@@ -7,6 +8,16 @@ import redis.clients.jedis.JedisPoolConfig;
 
 @Configuration
 public class RedisConfig {
+    @Value("${spring.data.redis.host}")
+    private String host;
+
+    @Value("${spring.data.redis.password}")
+    private String password;
+
+    @Value("${spring.data.redis.port}")
+    private int port;
+
+
     @Bean
     public JedisPoolConfig jedisPoolConfig() {
         JedisPoolConfig jedisPoolConfig = new JedisPoolConfig();
@@ -19,9 +30,9 @@ public class RedisConfig {
 
     @Bean
     public JedisPool jedisPool(JedisPoolConfig jedisPoolConfig) {
-        String redisHost = "localhost";
-        int redisPort = 6379;
-        String redisPassword = "123456";
+        String redisHost = host;
+        int redisPort = port;
+        String redisPassword = password;
         int timeout = 2000;
         return new JedisPool(jedisPoolConfig, redisHost, redisPort, timeout, redisPassword);
     }
