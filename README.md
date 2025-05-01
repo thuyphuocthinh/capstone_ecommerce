@@ -14,7 +14,7 @@ A full-featured e-commerce platform built with **Java Spring Boot**, designed to
 - **Spring OAuth2** – Social login support (Google, Facebook, etc.)  
 - **STOMP over WebSocket** – Real-time communication (chat, notifications)  
 - **Redis (Cache + Stream)** – Performance caching & event streaming  
-- **Full-text search** – Search engine integration (e.g., via Hibernate Search or Elasticsearch)
+- **Full-text search** – MySQL full text search
 
 ### 🗃️ Database
 - **MySQL** – Relational database for structured data  
@@ -28,22 +28,20 @@ A full-featured e-commerce platform built with **Java Spring Boot**, designed to
 - Browse & search products
 - Add to cart & checkout
 - Order management & status tracking
-- Real-time chat with shop owners
+- Real-time comments with shop
 - Email verification & notifications
 
 ### 🏬 Shop Dashboard
 - Product management (CRUD)
 - Order management
 - Revenue statistics
-- Real-time chat with customers
-- Inventory alerts
+- Real-time comments with customers
+- Discount management
 
 ### 🛠️ Admin Dashboard
 - User & shop management
-- Category & tag management
-- System statistics & logs
-- Content moderation
-- Manage platform-wide settings
+- Category & brand management
+- Discount management
 
 ---
 
@@ -54,7 +52,6 @@ A full-featured e-commerce platform built with **Java Spring Boot**, designed to
 - Maven 3.6+
 - MySQL 8+
 - Redis
-- (Optional) Elasticsearch (if used for full-text search)
 
 ### Installation
 ```bash
