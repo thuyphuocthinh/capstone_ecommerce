@@ -11,8 +11,8 @@ A full-featured e-commerce platform built with **Java Spring Boot**, designed to
 - **Spring Security + JWT** – Secure user authentication & authorization  
 - **Spring JPA (Hibernate)** – ORM for database operations  
 - **Spring Mail** – Email service integration (e.g., for verification, order notifications)  
-- **Spring OAuth2** – Social login support (Google, Facebook, etc.)  
-- **STOMP over WebSocket** – Real-time communication (chat, notifications)  
+- **Spring OAuth2** – Social login support (Google, etc.)  
+- **STOMP over WebSocket** – Real-time communication (comments, notifications)  
 - **Redis (Cache + Stream)** – Performance caching & event streaming  
 - **Full-text search** – MySQL full text search
 
