@@ -53,16 +53,31 @@ A full-featured e-commerce platform built with **Java Spring Boot**, designed to
 - MySQL 8+
 - Redis
 
-### Installation
+### 🛠️ Installation
+
 ```bash
-# Clone the repository
+# 1. Clone the repository
 git clone https://github.com/your-username/ecommerce-springboot.git
 
-# Navigate into the project
+# 2. Navigate into the project
 cd ecommerce-springboot
 
-# Configure application.yml or application.properties
-# Set DB, Redis, Mail credentials etc.
+# 3. Set up environment variables (you can put this in a .env file or export manually)
+export DB_HOST=localhost
+export DB_PORT=3306
+export DB_NAME=ecommerce
+export DB_USERNAME=root
+export DB_PASSWORD=yourpassword
 
-# Run the application
+export REDIS_HOST=localhost
+export REDIS_PORT=6379
+
+export JWT_SECRET=your_jwt_secret
+
+# Optional: Mail config (for Spring Mail)
+export MAIL_USERNAME=your_email@gmail.com
+export MAIL_PASSWORD=your_email_password
+
+# 4. Run the application
 ./mvnw spring-boot:run
+
